@@ -282,7 +282,7 @@ namespace JadScugs
         {
             orig(self);
 
-            if (self.SlugCatClass.value == "MouthScug" && self.input[0].y == 1 && self.CraftingResults() != null) 
+            if (self.SlugCatClass.value == "MouthScug" && self.input[0].y == 0 && self.CraftingResults() != null) 
             {
                 if(self.CraftingResults() == AbstractPhysicalObject.AbstractObjectType.DangleFruit)//DangleFruit is used for all super snacks
                 {
