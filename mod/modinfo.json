@@ -1,0 +1,10 @@
+﻿{
+	"id": "jadimatic.jadscugs",
+	"name": "Jad Scugs",
+	"version": "0.1.0",
+	"authors": "Jadimatic",
+	"description": "A collection of custom slugcats.",
+	"requirements": [ "slime-cubed.slugbase" ],
+	"requirements_names": [ "SlugBase" ],
+	"tags": [ "Custom Slugcat" ]
+}
