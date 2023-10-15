@@ -19,12 +19,7 @@
 			"DangleFruit": 1
 		  }
 		},
-		"jadscugs/jump_modifier": 0.25,
-		"jadscugs/roll_length": 600,
-		"jadscugs/explode_on_death": true,
-		
 		"select_menu_scene": "Slugcat_MouthScug",
 		"select_menu_scene_ascended": "Ghost_MouthScug",
-		"jadscugs/mean_lizards": 0.8
 	}
 }
