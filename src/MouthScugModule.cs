@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using UnityEngine;
 
 namespace JadScugs
 {
@@ -12,6 +13,7 @@ namespace JadScugs
         public Player player;
         public AbstractPhysicalObject[] mouthItems = new AbstractPhysicalObject[2];
         public AbstractCreature mouthCreature;
+        
 
         public static MouthScugModule Load(MiscWorldSaveData data, Player player)
         {
@@ -30,7 +32,36 @@ namespace JadScugs
             return mouth;
         }
 
-        public  void Save()
+        public bool MouthContains(Player self, AbstractPhysicalObject.AbstractObjectType obj)
+        {
+            if (!self.TryGetMouthScugModule(out var playerModule))
+            {
+                return false;
+            }
+            var mouthItems = playerModule.mouthItems;
+            for (int i = 0; i < mouthItems.Length; i++)
+            {
+                if (mouthItems[i] != null)
+                {
+                    if (mouthItems[i].type == obj)
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+        public int MouthIndex(Player self)
+        {
+            int index = -1;
+            bool[] triggersDown = self.Input().TriggersDown(self);
+            if (triggersDown[0] && triggersDown[1]) { index = -2; }
+            else if (triggersDown[0]) { index = 0; }
+            else if (triggersDown[1]) { index = 1; }
+            return index;
+        }
+
+        public void Save()
         {
             var data = player.abstractCreature.world.game.GetStorySession.saveState.miscWorldSaveData;
             data.GetSlugBaseData().Set($"MouthScug_Items_{player.playerState.playerNumber}", new string[] {
