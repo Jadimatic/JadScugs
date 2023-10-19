@@ -249,6 +249,6 @@ namespace JadScugs
 
         private static readonly ConditionalWeakTable<Player, BCPuppetPlayerData> _cwt = new();
 
-        public static BCPuppetPlayerData BCPuppet(this Player player) => _cwt.GetValue(player, _ => new BCPuppetPlayerData());
+        public static BCPuppetPlayerData BCPuppet(this Player player) => _cwt.GetValue(player, _ => new BCPuppetPlayerData(player));
     }
 }

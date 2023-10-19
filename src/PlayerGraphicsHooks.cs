@@ -25,7 +25,7 @@ namespace JadScugs
             On.PlayerGraphics.ctor += PlayerGraphics_ctor;
             On.PlayerGraphics.Update += PlayerGraphics_Update;
             On.Player.Update += Player_Update;
-
+            AttachedSprite.Apply();
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
         }
 
@@ -90,6 +90,7 @@ namespace JadScugs
 
             if(self.player.SlugCatClass.value == "BCPuppet")
             {
+                var headSprite = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Head, "BCPuppet2_");
                 for (int i = 0; i < self.hands.Length; i++)
                 {
                     self.hands[i].mode = Limb.Mode.Dangle;

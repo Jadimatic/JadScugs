@@ -13,7 +13,7 @@ public static class BCPuppetEnums
 
     public static void RegisterValues()
     {
-        Color.Body = new PlayerColor("Body");
+        Color.Body = new PlayerColor("Body Primary");
         Color.Cloth = new PlayerColor("Cloth Primary");
     }
 }

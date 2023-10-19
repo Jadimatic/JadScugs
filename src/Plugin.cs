@@ -55,6 +55,7 @@ namespace JadScugs
 
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-face"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppetNerv-face");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-head");
+                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet2-head");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-arm");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-body");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-hips");
