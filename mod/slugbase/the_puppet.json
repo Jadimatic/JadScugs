@@ -3,11 +3,15 @@
 	"name": "The Puppet",
 	"description": "Puppet of the iterator Bountiful Curiosity",
 	"features": {
-		"start_room": "SU_B12",
-		"food_max": 3,
+		"custom_colors": [
+		  { "name": "Body", "story": "CC5571" },
+		  { "name": "Eyes", "story": "FFFFFF", "arena": [ "FFFFFF", "FFFFFF", "FFFFFF", "FFFFFF" ] },
+		  { "name": "Cloth Primary", "story": "FFFFFF" },
+		  { "name": "Pattern", "story": "5D629A" }
+		],
+		"start_room": "SU_VR1",
+		"food_max": 6,
 		"food_min": 0,
-		"can_maul": true,
-		"maul_damage": 2,
 		"select_menu_scene": "Slugcat_BCPuppet",
 		"select_menu_scene_ascended": "Ghost_BCPuppet",
 	}

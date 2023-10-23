@@ -44,6 +44,7 @@ namespace JadScugs
                 WipHooks.Init();
                 PlayerGraphicsHooks.Init();
                 PlayerHooks.Init();
+                BCPuppetEnums.RegisterValues();
 
                 Futile.atlasManager.LoadAtlas("atlases/MouthScugAtlases/MouthScug-face"); Futile.atlasManager.LoadAtlas("atlases/MouthScugAtlases/MouthScugNerv-face");
                 Futile.atlasManager.LoadAtlas("atlases/MouthScugAtlases/MouthScug-head");
@@ -53,14 +54,13 @@ namespace JadScugs
                 Futile.atlasManager.LoadAtlas("atlases/MouthScugAtlases/MouthScug-legs");
                 Futile.atlasManager.LoadAtlas("atlases/MouthScugAtlases/MouthScug-tail"); Futile.atlasManager.LoadAtlas("atlases/MouthScugAtlases/MouthScugNerv-tail");
 
-                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-face"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppetNerv-face");
-                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-head");
-                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet2-head");
+                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-face"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppetNerv-face"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetPattern-face");
+                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-head"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetAntennae-head"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetPattern-head");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-arm");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-body");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-hips");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-legs");
-                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-tail"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppetNerv-tail");
+                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-tail");
                 
                 HeadTexture = new Texture2D(150, 75, TextureFormat.ARGB32, false);
                 var headTextureFile = AssetManager.ResolveFilePath("atlases/BCPuppetAtlases/BCPuppet-head.png");
@@ -105,7 +105,7 @@ namespace JadScugs
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex);
+                Debug.LogException(ex);
                 Logger.LogMessage("FAIL trying to load " + PLUGIN_NAME);
             }
         }

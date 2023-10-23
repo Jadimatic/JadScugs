@@ -63,6 +63,10 @@ public class AttachedSprite
             {
                 sprite.MoveInFrontOfOtherNode(sLeaser.sprites[(int)SpriteType + i]);
             }
+            else
+            {
+                sprite.MoveBehindOtherNode(sLeaser.sprites[(int)SpriteType + i]);
+            }
         }
     }
 

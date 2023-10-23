@@ -13,10 +13,13 @@ namespace JadScugs
 
     public class BCPuppetPlayerData
     {
-        public int SpitCounter;
-        public int StashDelayCounter;
-        public bool ProteinBoost;
-        public bool mouthStuffed = false;
+        public bool grabbed;
+        public AttachedSprite headAntennae;
+        public AttachedSprite headPattern;
+        public AttachedSprite facePattern;
+
+
+
         public FAtlas HeadAtlas;
         public FAtlas ArmAtlas;
         public FAtlas BodyAtlas;
@@ -60,7 +63,6 @@ namespace JadScugs
         public void SetupColors(PlayerGraphics pg)
         {
             ClothColor = pg.GetColor(BCPuppetEnums.Color.Cloth) ?? Custom.hexToColor("fd7a02");
-            BodyColor = pg.GetColor(BCPuppetEnums.Color.Body) ?? Custom.hexToColor("ff66cb");
         }
 
         public void LoadHeadAtlas()
@@ -141,86 +143,14 @@ namespace JadScugs
 
         public void Draw(RoomCamera.SpriteLeaser sLeaser, bool nerv)
         {
-
-
             foreach (var sprite in sLeaser.sprites)
             {
                 if (nerv && Futile.atlasManager._allElementsByName.TryGetValue("BCPuppetNerv_" + sprite.element.name, out var element)) { sprite.element = element; }
                 else if (Futile.atlasManager._allElementsByName.TryGetValue("BCPuppet_" + sprite.element.name, out element)) { sprite.element = element; }
             }
-
-            /*
-            //HEAD
-            string headName = sLeaser.sprites[3].element.name;
-            if (headName.StartsWith("HeadA") && Futile.atlasManager.DoesContainElementWithName("BCPuppet_" + headName))
-            {
-                sLeaser.sprites[3].SetElementByName("BCPuppet_" + headName);
-            }
-
-            //FACE
-            string faceName = sLeaser.sprites[9].element.name;
-            if (nerv)
-            {
-                if (faceName.StartsWith("FaceA") && Futile.atlasManager.DoesContainElementWithName("BCPuppetNerv_" + faceName))
-                {
-                    sLeaser.sprites[9].SetElementByName("BCPuppetNerv_" + faceName);
-                }
-                if (faceName.StartsWith("FaceB") && Futile.atlasManager.DoesContainElementWithName("BCPuppetNerv_" + faceName))
-                {
-                    sLeaser.sprites[9].SetElementByName("BCPuppetNerv_" + faceName);
-                }
-                if (faceName.StartsWith("FaceStunned") && Futile.atlasManager.DoesContainElementWithName("BCPuppetNerv_" + faceName))
-                {
-                    sLeaser.sprites[9].SetElementByName("BCPuppetNerv_" + faceName);
-                }
-                if (faceName.StartsWith("FaceDead") && Futile.atlasManager.DoesContainElementWithName("BCPuppetNerv_" + faceName))
-                {
-                    sLeaser.sprites[9].SetElementByName("BCPuppetNerv_" + faceName);
-                }
-            }
-            else
-            {
-                if (faceName.StartsWith("FaceA") && Futile.atlasManager.DoesContainElementWithName("BCPuppet_" + faceName))
-                {
-                    sLeaser.sprites[9].SetElementByName("BCPuppet_" + faceName);
-                }
-                if (faceName.StartsWith("FaceB") && Futile.atlasManager.DoesContainElementWithName("BCPuppet_" + faceName))
-                {
-                    sLeaser.sprites[9].SetElementByName("BCPuppet_" + faceName);
-                }
-                if (faceName.StartsWith("FaceStunned") && Futile.atlasManager.DoesContainElementWithName("BCPuppet_" + faceName))
-                {
-                    sLeaser.sprites[9].SetElementByName("BCPuppet_" + faceName);
-                }
-                if (faceName.StartsWith("FaceDead") && Futile.atlasManager.DoesContainElementWithName("BCPuppet_" + faceName))
-                {
-                    sLeaser.sprites[9].SetElementByName("BCPuppet_" + faceName);
-                }
-            }
-            //ARMS
-            
-            //TORSO
-            string bodyName = sLeaser.sprites[0].element.name;
-            if (bodyName.StartsWith("BodyA") && Futile.atlasManager.DoesContainElementWithName("BCPuppet_" + bodyName))
-            {
-                sLeaser.sprites[0].SetElementByName("BCPuppet_" + bodyName);
-            }
-            string hipsName = sLeaser.sprites[1].element.name;
-            if (hipsName.StartsWith("HipsA") && Futile.atlasManager.DoesContainElementWithName("BCPuppet_" + hipsName))
-            {
-                sLeaser.sprites[1].SetElementByName("BCPuppet_" + hipsName);
-            }
-            //LEGS
-            string legsName = sLeaser.sprites[4].element.name;
-            if (legsName.StartsWith("LegsA") && Futile.atlasManager.DoesContainElementWithName("BCPuppet_" + legsName))
-            {
-                sLeaser.sprites[4].SetElementByName("BCPuppet_" + legsName);
-            }
-            //TAIL
-            */
-            FAtlasElement tailNerv = Futile.atlasManager.GetElementWithName("BCPuppetNerv_Tail");
+            /*FAtlasElement tailNerv = Futile.atlasManager.GetElementWithName("BCPuppetNerv_Tail");
             FAtlasElement tailNormal = Futile.atlasManager.GetElementWithName("BCPuppet_Tail");
-            sLeaser.sprites[2].element = nerv ? tailNerv : tailNormal;
+            sLeaser.sprites[2].element = nerv ? tailNerv : tailNormal;*/
         }
 
     }

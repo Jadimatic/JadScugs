@@ -20,13 +20,46 @@ namespace JadScugs
         {
             On.Player.ctor += Player_ctor;
             On.Player.UpdateBodyMode += Player_UpdateBodyMode;
+            AttachedSprite.Apply();
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
             On.PlayerGraphics.InitiateSprites += PlayerGraphics_InitiateSprites;
             On.PlayerGraphics.ctor += PlayerGraphics_ctor;
             On.PlayerGraphics.Update += PlayerGraphics_Update;
             On.Player.Update += Player_Update;
-            AttachedSprite.Apply();
+            On.SlugcatHand.Update += SlugcatHand_Update;
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
+        }
+
+        public static void ShowArms(SlugcatHand hand, Player player, Vector2 armDist, Vector2 beamTipArmDist, float velEffect)
+        {
+            if (player.grasps[hand.limbNumber] == null)
+            {
+                if (hand.mode != Limb.Mode.HuntAbsolutePosition || hand.retractCounter > 0)
+                {
+                    if ((player.bodyMode != Player.BodyModeIndex.ClimbingOnBeam || player.animation == Player.AnimationIndex.BeamTip || player.animation == Player.AnimationIndex.StandOnBeam) && player.bodyMode != Player.BodyModeIndex.ZeroG && player.bodyMode != Player.BodyModeIndex.Swimming)
+                    {
+                        hand.mode = Limb.Mode.HuntRelativePosition;
+                        if(player.animation == Player.AnimationIndex.BeamTip)
+                        {
+                            hand.relativeHuntPos = new Vector2((beamTipArmDist.x * -1 + beamTipArmDist.x * 2 * hand.limbNumber) * (1f - Mathf.Sin(player.switchHandsProcess * Mathf.PI)) + (velEffect * -1) * player.mainBodyChunk.vel.x, beamTipArmDist.y);
+                        }
+                        else
+                        {
+                            hand.relativeHuntPos = new Vector2((armDist.x * -1 + armDist.x * 2 * hand.limbNumber) * (1f - Mathf.Sin(player.switchHandsProcess * Mathf.PI)) + (velEffect * -1) * player.mainBodyChunk.vel.x, armDist.y);
+                        }
+                        hand.retractCounter = 0;
+                    }
+                }
+            }
+        }
+
+        private static void SlugcatHand_Update(On.SlugcatHand.orig_Update orig, SlugcatHand self)
+        {
+            orig(self);
+            if (self.owner.owner is Player player && player.SlugCatClass.value == "BCPuppet")
+            {
+                ShowArms(self, player, new Vector2(8, -20), new Vector2(20, -12), 4);
+            }
         }
 
         private static void PlayerGraphics_InitiateSprites(On.PlayerGraphics.orig_InitiateSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
@@ -86,16 +119,11 @@ namespace JadScugs
         private static void PlayerGraphics_ctor(On.PlayerGraphics.orig_ctor orig, PlayerGraphics self, PhysicalObject ow)
         {
             orig(self, ow);
-
-
             if(self.player.SlugCatClass.value == "BCPuppet")
             {
-                var headSprite = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Head, "BCPuppet2_");
-                for (int i = 0; i < self.hands.Length; i++)
-                {
-                    self.hands[i].mode = Limb.Mode.Dangle;
-                    self.hands[i].retractCounter = 0;
-                }
+                self.player.BCPuppet().headAntennae = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Head, "BCPuppetAntennae_");
+                self.player.BCPuppet().headPattern = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Head, "BCPuppetPattern_");
+                self.player.BCPuppet().facePattern = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Face, "BCPuppetPattern_", false);
             }
 
             if (self.player.SlugCatClass.value == "MouthScug")
@@ -117,88 +145,7 @@ namespace JadScugs
 
 
 
-        public static bool ArtificerConsussionConditions(Player self)
-        {
-            bool flag = self.wantToJump > 0 && self.input[0].pckp;
-            bool flag2 = self.eatMeat >= 20 || self.maulTimer >= 15;
-            return (flag && !self.submerged && !flag2 && (self.input[0].y < 0 || self.bodyMode == Player.BodyModeIndex.Crawl) && (self.canJump > 0 || self.input[0].y < 0) && self.Consious && !self.pyroJumpped && self.pyroParryCooldown <= 0f);
-        }
-
-        public static void ConcussiveBlast(Player self, bool smoke, bool light)
-        {
-            self.pyroParryCooldown = 40f;
-            Vector2 pos2 = self.firstChunk.pos;
-            for (int k = 0; k < 8; k++)
-            {
-                if(smoke)
-                {
-                    self.room.AddObject(new Explosion.ExplosionSmoke(pos2, Custom.RNV() * 5f * UnityEngine.Random.value, 1f));
-                }
-            }
-            if(light)
-            {
-                self.room.AddObject(new Explosion.ExplosionLight(pos2, 160f, 1f, 3, Color.white));
-            }
-            for (int l = 0; l < 10; l++)
-            {
-                Vector2 a2 = Custom.RNV();
-                self.room.AddObject(new Spark(pos2 + a2 * UnityEngine.Random.value * 40f, a2 * Mathf.Lerp(4f, 30f, UnityEngine.Random.value), Color.white, null, 4, 18));
-            }
-            self.room.AddObject(new ShockWave(pos2, 200f, 0.2f, 6, false));
-            self.room.PlaySound(SoundID.Fire_Spear_Explode, pos2, 0.3f + UnityEngine.Random.value * 0.3f, 0.5f + UnityEngine.Random.value * 2f);
-            self.room.InGameNoise(new InGameNoise(pos2, 8000f, self, 1f));
-            List<Weapon> list = new List<Weapon>();
-            for (int m = 0; m < self.room.physicalObjects.Length; m++)
-            {
-                for (int n = 0; n < self.room.physicalObjects[m].Count; n++)
-                {
-                    if (self.room.physicalObjects[m][n] is Weapon)
-                    {
-                        Weapon weapon = self.room.physicalObjects[m][n] as Weapon;
-                        if (weapon.mode == Weapon.Mode.Thrown && Custom.Dist(pos2, weapon.firstChunk.pos) < 300f)
-                        {
-                            list.Add(weapon);
-                        }
-                    }
-                    bool flag3;
-                    if (ModManager.CoopAvailable && !Custom.rainWorld.options.friendlyFire)
-                    {
-                        Player player = self.room.physicalObjects[m][n] as Player;
-                        flag3 = (player == null || player.isNPC);
-                    }
-                    else
-                    {
-                        flag3 = true;
-                    }
-                    bool flag4 = flag3;
-                    if (self.room.physicalObjects[m][n] is Creature && self.room.physicalObjects[m][n] != self && flag4)
-                    {
-                        Creature creature = self.room.physicalObjects[m][n] as Creature;
-                        if (Custom.Dist(pos2, creature.firstChunk.pos) < 200f && (Custom.Dist(pos2, creature.firstChunk.pos) < 60f || self.room.VisualContact(self.abstractCreature.pos, creature.abstractCreature.pos)))
-                        {
-                            self.room.socialEventRecognizer.WeaponAttack(null, self, creature, true);
-                            creature.SetKillTag(self.abstractCreature);
-                            if (creature is Scavenger)
-                            {
-                                (creature as Scavenger).HeavyStun(80);
-                            }
-                            else
-                            {
-                                creature.Stun(80);
-                            }
-                            creature.firstChunk.vel = Custom.DegToVec(Custom.AimFromOneVectorToAnother(pos2, creature.firstChunk.pos)) * 30f;
-                            if (creature is TentaclePlant)
-                            {
-                                for (int num5 = 0; num5 < creature.grasps.Length; num5++)
-                                {
-                                    creature.ReleaseGrasp(num5);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
+        
 
 
 
@@ -229,6 +176,14 @@ namespace JadScugs
             {
                 Debug.Log($"Exception at (hook name):  {e}");
             }
+            try
+            {
+                BCPuppet_Update(self, eu);
+            }
+            catch (Exception e)
+            {
+                Debug.Log($"Exception at (hook name):  {e}");
+            }
         }
         private static bool MouthStuffed(Player self)
         {
@@ -246,6 +201,27 @@ namespace JadScugs
             }
         }
 
+        private static void BCPuppet_Update(Player self, bool eu)
+        {
+            if(self.SlugCatClass.value == "BCPuppet")
+            {
+                Debug.Log(self.eatCounter);
+                if (self.eatCounter < 15)
+                {
+                    self.eatCounter = 15;
+                }
+                if (self.BCPuppet().grabbed)
+                {
+                    self.SlugCatSkill().ConcussiveBlast(self, false, false, 100);
+                    self.SubtractFood(1);
+                    self.BCPuppet().grabbed = false;
+                }
+                self.aerobicLevel = 0;
+                self.airInLungs = 1;
+                self.slugcatStats.lungsFac = 0;
+            }
+        }
+
         private static void MouthScug_Update(Player self, bool eu)
         {
             if (!self.TryGetMouthScugModule(out var playerModule))
@@ -255,22 +231,8 @@ namespace JadScugs
             var mouthItems = playerModule.mouthItems;
             int mouthIndex = -1;
             int length = 600;
-            /*if (self.input[0].y == 1)
-            {
-                mouthIndex = 1;
-            }
-            else if (self.input[0].y == 0)
-            {
-                mouthIndex = 0;
-            }*/
 
             mouthIndex = playerModule.MouthIndex(self);
-            //Debug.Log("StashDelayCounter is " + self.MouthScug().StashDelayCounter);
-            //Debug.Log("Protein Boost? "+self.MouthScug().ProteinBoost);
-            Debug.Log("Meat eating counter is "+self.eatMeat);
-            //Debug.Log("SpitCounter is " + self.MouthScug().SpitCounter);
-
-            Debug.Log("The current danger level is" + self.JadScug().DangerLevel);
 
             if (self.input[0].pckp && StashFlag(self) && self.MouthScug().StashDelayCounter == 0 && self.eatCounter == 40 && self.eatMeat == 0)
             {
@@ -321,33 +283,13 @@ namespace JadScugs
             self.pyroParryCooldown -= 1f;
             if (playerModule.MouthContains(self, AbstractPhysicalObject.AbstractObjectType.FirecrackerPlant))
             {
-                if (ArtificerConsussionConditions(self))
+                if (self.SlugCatSkill().ArtificerConsussionConditions(self))
                 {
-                    ConcussiveBlast(self, true, true);
+                    self.SlugCatSkill().ConcussiveBlast(self);
                 }
             }
-
-
-            if (self.input[0].jmp && !self.input[1].jmp)
-            {
-                
-
-
-
-                /*if(playerModule.mouthCreature == null)
-                {
-                    playerModule.mouthCreature = new AbstractCreature(self.room.world, StaticWorld.GetCreatureTemplate(MoreSlugcatsEnums.CreatureTemplateType.FireBug), null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID());
-                }
-                else 
-                {
-                    playerModule.mouthCreature = null;
-                }*/
-                    /*mouthCreature.Die();
-                    self.room.abstractRoom.AddEntity(mouthCreature);
-                    mouthCreature.RealizeInRoom();*/
-            }
-            Debug.Log("Corpse stored: " + playerModule.mouthCreature);
-            Debug.Log(mouthItems[0] + ", " + mouthItems[1]);
+            //Debug.Log("Corpse stored: " + playerModule.mouthCreature);
+            //Debug.Log(mouthItems[0] + ", " + mouthItems[1]);
 
             if (self.animation == Player.AnimationIndex.Roll)
             {
@@ -400,9 +342,17 @@ namespace JadScugs
         {
             if (self.player.SlugCatClass.value == "MouthScug")
             {
+                if(self.player.MouthScug().SpitCounter > 0)
+                {
+                    self.blink = 5;
+                }
                 self.swallowing = 0;
             }
             orig(self);
+            if (self.player.SlugCatClass.value == "BCPuppet")
+            {
+                SeaLegsPartTwo(self);
+            }
         }
 
         private static void Player_UpdateBodyMode(On.Player.orig_UpdateBodyMode orig, Player self)
@@ -427,19 +377,19 @@ namespace JadScugs
 
         private static float DangerLevelMath(PlayerGraphics graphics, float minRange, float maxRange)
         {
-            //ThreatDetermination test = new ThreatDetermination(self.playerState.playerNumber);
-
-            //test.currentMusicAgnosticThreat
             float num = 0f;
-            if (graphics.player.Consious && graphics.objectLooker.currentMostInteresting != null && graphics.objectLooker.currentMostInteresting is Creature)
+            if (graphics.player.room != null)
             {
-                CreatureTemplate.Relationship relationship = graphics.player.abstractCreature.creatureTemplate.CreatureRelationship((graphics.objectLooker.currentMostInteresting as Creature).abstractCreature.creatureTemplate);
-                if (relationship.type == CreatureTemplate.Relationship.Type.Afraid && !(graphics.objectLooker.currentMostInteresting as Creature).dead)
+                if (graphics.player.Consious && graphics.objectLooker.currentMostInteresting != null && graphics.objectLooker.currentMostInteresting is Creature)
                 {
-                    num = Mathf.InverseLerp(Mathf.Lerp(minRange, maxRange, relationship.intensity), 10f, Vector2.Distance(graphics.player.mainBodyChunk.pos, graphics.objectLooker.mostInterestingLookPoint) * (graphics.player.room.VisualContact(graphics.player.mainBodyChunk.pos, graphics.objectLooker.mostInterestingLookPoint) ? 1f : 1.5f));
-                    if ((graphics.objectLooker.currentMostInteresting as Creature).abstractCreature.abstractAI != null && (graphics.objectLooker.currentMostInteresting as Creature).abstractCreature.abstractAI.RealAI != null)
+                    CreatureTemplate.Relationship relationship = graphics.player.abstractCreature.creatureTemplate.CreatureRelationship((graphics.objectLooker.currentMostInteresting as Creature).abstractCreature.creatureTemplate);
+                    if (relationship.type == CreatureTemplate.Relationship.Type.Afraid && !(graphics.objectLooker.currentMostInteresting as Creature).dead)
                     {
-                        num *= (graphics.objectLooker.currentMostInteresting as Creature).abstractCreature.abstractAI.RealAI.CurrentPlayerAggression(graphics.player.abstractCreature);
+                        num = Mathf.InverseLerp(Mathf.Lerp(minRange, maxRange, relationship.intensity), 10f, Vector2.Distance(graphics.player.mainBodyChunk.pos, graphics.objectLooker.mostInterestingLookPoint) * (graphics.player.room.VisualContact(graphics.player.mainBodyChunk.pos, graphics.objectLooker.mostInterestingLookPoint) ? 1f : 1.5f));
+                        if ((graphics.objectLooker.currentMostInteresting as Creature).abstractCreature.abstractAI != null && (graphics.objectLooker.currentMostInteresting as Creature).abstractCreature.abstractAI.RealAI != null)
+                        {
+                            num *= (graphics.objectLooker.currentMostInteresting as Creature).abstractCreature.abstractAI.RealAI.CurrentPlayerAggression(graphics.player.abstractCreature);
+                        }
                     }
                 }
             }
@@ -480,6 +430,34 @@ namespace JadScugs
                 self.player.JadScug().DangerLevel = DangerLevelMath(self, 1562f, 9762f);
                 bool nerv = (self.player.JadScug().DangerLevel > 0);
                 self.player.BCPuppet().Draw(sLeaser, nerv);
+                sLeaser.sprites[self.player.BCPuppet().headAntennae.SpriteIndex].color = (Color)self.GetColor(BCPuppetEnums.Color.Cloth);
+                sLeaser.sprites[self.player.BCPuppet().headPattern.SpriteIndex].color = (Color)self.GetColor(BCPuppetEnums.Color.Pattern);
+                sLeaser.sprites[self.player.BCPuppet().facePattern.SpriteIndex].color = (Color)self.GetColor(BCPuppetEnums.Color.Pattern);
+                SeaLegsPartOne(self, sLeaser, camPos, timeStacker);
+            }
+        }
+
+        private static void SeaLegsPartOne(PlayerGraphics pg, RoomCamera.SpriteLeaser sLeaser, Vector2 camPos, float timeStacker)
+        {
+            if (pg.player.animation == Player.AnimationIndex.DeepSwim || pg.player.animation == Player.AnimationIndex.SurfaceSwim)
+            {
+                float distance = 6;
+                var head = Vector2.Lerp(pg.drawPositions[0, 1], pg.drawPositions[0, 0], timeStacker);
+                var hips = Vector2.Lerp(pg.drawPositions[1, 1], pg.drawPositions[1, 0], timeStacker);
+                var legs = hips + Custom.DirVec(head, hips).normalized * distance;
+                sLeaser.sprites[4].isVisible = true;
+                sLeaser.sprites[4].SetPosition(legs - camPos);
+                
+            }
+        }
+        private static void SeaLegsPartTwo(PlayerGraphics pg)
+        {
+            if (pg.player.animation == Player.AnimationIndex.DeepSwim || pg.player.animation == Player.AnimationIndex.SurfaceSwim)
+            {
+                pg.legs.ConnectToPoint(pg.owner.bodyChunks[1].pos + Custom.DirVec(pg.owner.bodyChunks[0].pos, pg.owner.bodyChunks[1].pos) * 4f, 4f, push: false, 0f, pg.owner.bodyChunks[1].vel, 0.2f, 0f);
+                pg.legsDirection = Custom.DirVec(pg.owner.bodyChunks[0].pos, pg.owner.bodyChunks[1].pos);
+                pg.legs.vel += pg.legsDirection * 0.2f;
+                pg.legsDirection.Normalize();
             }
         }
 

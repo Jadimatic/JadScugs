@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Mono.Cecil.Cil;
+using MonoMod.Cil;
+using MoreSlugcats;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,15 +17,83 @@ namespace JadScugs
         public static void Init() 
         {
             On.SaveState.SessionEnded += SaveState_SessionEnded;
-            
+            IL.Player.GrabUpdate += Player_GrabUpdate;
             On.Player.GraspsCanBeCrafted += Player_GraspsCanBeCrafted;
             On.Player.SpitUpCraftedObject += Player_SpitUpCraftedObject;
             On.Player.SwallowObject += Player_SwallowObject;
+            On.Player.CraftingResults += Player_CraftingResults;
             On.Player.EatMeatUpdate += Player_EatMeatUpdate;
             On.Player.HeavyCarry += Player_HeavyCarry;
             On.Player.ThrownSpear += Player_ThrownSpear;
+            On.Player.DeathByBiteMultiplier += Player_DeathByBiteMultiplier;
+            On.Player.Grabbed += Player_Grabbed;
             On.OverWorld.WorldLoaded += OverWorld_WorldLoaded;
             On.Player.Jump += Player_Jump;
+        }
+
+        private static void Player_GrabUpdate(ILContext il)
+        {
+            var cursor = new ILCursor(il);
+
+            cursor.GotoNext(MoveType.After,
+                i => i.MatchLdsfld<MoreSlugcatsEnums.SlugcatStatsName>(nameof(MoreSlugcatsEnums.SlugcatStatsName.Artificer)),
+                i => i.MatchCallOrCallvirt(out _));
+
+            cursor.MoveAfterLabels();
+            cursor.Emit(OpCodes.Ldarg_0);
+            cursor.EmitDelegate((Player self) => self.slugcatStats.name.value == "BCPuppet");//Injects this condition into the check for Arti spear crafting
+            cursor.Emit(OpCodes.Or);
+        }
+
+        private static AbstractPhysicalObject.AbstractObjectType Player_CraftingResults(On.Player.orig_CraftingResults orig, Player self)
+        {
+            if (self.SlugCatClass.value == "BCPuppet")
+            {
+                AbstractPhysicalObject.AbstractObjectType abstractObjectType = GourmandCombos.CraftingResults_ObjectData(self.grasps[0], self.grasps[1], true);
+                if (self.FoodInStomach < self.MaxFoodInStomach)
+                {
+                    if (abstractObjectType == AbstractPhysicalObject.AbstractObjectType.SlimeMold ||
+                        abstractObjectType == AbstractPhysicalObject.AbstractObjectType.FlareBomb ||
+                        abstractObjectType == AbstractPhysicalObject.AbstractObjectType.Lantern)
+                    {
+                        return orig(self);
+                    }
+                    Creature.Grasp[] grasps = self.grasps;
+                    for (int i = 0; i < grasps.Length; i++)
+                    {
+                        if (grasps[i] != null && grasps[i].grabbed is IPlayerEdible && (grasps[i].grabbed as IPlayerEdible).Edible)
+                        {
+                            return null;
+                        }
+                    }
+                    if (grasps[0] != null && grasps[0].grabbed is Spear)
+                    {
+                        return AbstractPhysicalObject.AbstractObjectType.Spear;
+                    }
+                    if (grasps[0] == null && grasps[1] != null && grasps[1].grabbed is Spear && !(grasps[1].grabbed as Spear).abstractSpear.explosive && self.objectInStomach == null)
+                    {
+                        return AbstractPhysicalObject.AbstractObjectType.Spear;
+                    }
+                }
+                return null;
+            }
+            return orig(self);
+        }
+
+        private static void Player_Grabbed(On.Player.orig_Grabbed orig, Player self, Creature.Grasp grasp)
+        {
+            orig(self, grasp);
+            if(self.SlugCatClass.value == "BCPuppet") { self.BCPuppet().grabbed = true; }
+        }
+
+        private static float Player_DeathByBiteMultiplier(On.Player.orig_DeathByBiteMultiplier orig, Player self)
+        {
+            orig(self);
+            if(self.SlugCatClass.value == "BCPuppet" && self.FoodInStomach > 0)
+            {
+                return 0;
+            }
+            return orig(self);
         }
 
         private static void OverWorld_WorldLoaded(On.OverWorld.orig_WorldLoaded orig, OverWorld self)
@@ -175,6 +246,7 @@ namespace JadScugs
 
         private static void Player_SwallowObject(On.Player.orig_SwallowObject orig, Player self, int grasp)
         {
+            AbstractPhysicalObject abstractPhysicalObject = self.grasps[grasp].grabbed.abstractPhysicalObject;
             if (self.SlugCatClass.value == "MouthScug")
             {
                 if (!self.TryGetMouthScugModule(out var playerModule))
@@ -190,15 +262,7 @@ namespace JadScugs
                     Debug.Log("Nothing was swallowed because hand empty");
                     return;
                 }
-
-
-                /*self.objectInStomach = abstractPhysicalObject;
-                self.objectInStomach.Abstractize(self.abstractCreature.pos); */
-                            /*BodyChunk mainBodyChunk = self.mainBodyChunk;
-                            mainBodyChunk.vel.y = mainBodyChunk.vel.y + 20f;*/
-                            mouthIndex = playerModule.MouthIndex(self);
-
-                AbstractPhysicalObject abstractPhysicalObject = self.grasps[grasp].grabbed.abstractPhysicalObject;
+                mouthIndex = playerModule.MouthIndex(self);
                 self.ReleaseGrasp(grasp);
                 if(mouthIndex > -1 && playerModule.mouthCreature == null)
                 {
@@ -211,6 +275,26 @@ namespace JadScugs
                 else
                 {
                     self.room.PlaySound(SoundID.Rock_Bounce_Off_Creature_Shell, self.mainBodyChunk, false, 0.6f, 0.7f);
+                }
+            }
+            else if (self.SlugCatClass.value == "BCPuppet" && self.FoodInStomach < self.MaxFoodInStomach)
+            {
+                if (abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Rock)
+                {
+                    self.AddFood(1);
+                    self.ReleaseGrasp(grasp);
+                    abstractPhysicalObject.realizedObject.RemoveFromRoom();
+                    self.room.abstractRoom.RemoveEntity(abstractPhysicalObject);
+                    self.room.PlaySound(SoundID.Rock_Hit_Wall, self.firstChunk.pos, 1f, 1.5f + UnityEngine.Random.value * 1.5f);
+                }
+                else if (abstractPhysicalObject.type == MoreSlugcats.MoreSlugcatsEnums.AbstractObjectType.SingularityBomb)
+                {
+                    self.AddFood(1);
+                    self.Stun(200);
+                    self.ReleaseGrasp(grasp);
+                    abstractPhysicalObject.realizedObject.RemoveFromRoom();
+                    self.room.abstractRoom.RemoveEntity(abstractPhysicalObject);
+                    self.room.PlaySound(SoundID.Zapper_Zap, self.firstChunk.pos, 1f, 1.5f + UnityEngine.Random.value * 1.5f);
                 }
             }
             else
@@ -300,7 +384,86 @@ namespace JadScugs
                     return;
                 }
             }
+
+
+
+            if (self.SlugCatClass.value == "BCPuppet")
+            {
+                for (int i = 0; i < self.grasps.Length; i++)
+                {
+                    if (self.grasps[i] != null)
+                    {
+                        AbstractPhysicalObject abstractPhysicalObject = self.grasps[i].grabbed.abstractPhysicalObject;
+                        if (abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Spear)
+                        {
+                            self.ReleaseGrasp(i);
+                            abstractPhysicalObject.realizedObject.RemoveFromRoom();
+                            self.room.abstractRoom.RemoveEntity(abstractPhysicalObject);
+                            if (((abstractPhysicalObject as AbstractSpear).electric && (abstractPhysicalObject as AbstractSpear).electricCharge > 0) || (abstractPhysicalObject as AbstractSpear).explosive)
+                            {
+                                AbstractSpear abstractSpear = new AbstractSpear(self.room.world, null, self.abstractCreature.pos, self.room.game.GetNewID(), false);
+                                self.room.abstractRoom.AddEntity(abstractSpear);
+                                abstractSpear.RealizeInRoom();
+                                if (self.FreeHand() != -1)
+                                {
+                                    self.SlugcatGrab(abstractSpear.realizedObject, self.FreeHand());
+                                }
+                                self.AddFood(1);
+                                self.room.PlaySound(SoundID.Fire_Spear_Ignite, self.firstChunk.pos, 1f, 1.5f + UnityEngine.Random.value * 1.5f);
+                            }
+                            else
+                            {
+                                self.AddFood(1);
+                                self.room.PlaySound(SoundID.Rock_Hit_Wall, self.firstChunk.pos, 1f, 1.5f + UnityEngine.Random.value * 1.5f);
+                            }
+                            return;
+                        }
+                    }
+                }
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+            if (self.SlugCatClass.value == "BCPuppet")
+            {
+                if (self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Rock && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Rock)
+                {
+                    AbstractSpear abstractSpear = new AbstractSpear(self.room.world, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID(), false);
+                    RemoveHeldObjects(self);
+                    AddHeldObject(abstractSpear, self);
+                    return;
+                }
+                /*if (self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Lantern && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Lantern)
+                {
+                    AbstractPhysicalObject abstractGrenade = new AbstractPhysicalObject(self.room.world, AbstractPhysicalObject.AbstractObjectType.ScavengerBomb, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID());
+                    RemoveHeldObjects(self);
+                    AddHeldObject(abstractGrenade, self);
+                    return;
+                }*/
+            }
             orig(self);
+        }
+
+        private static bool oneHandCraft(Creature.Grasp[] grasps, AbstractPhysicalObject.AbstractObjectType obj)
+        {
+            bool canCraft = false;
+            if (grasps[0].grabbed.abstractPhysicalObject.type == obj && grasps[1].grabbed.abstractPhysicalObject.type == null ||
+                grasps[0].grabbed.abstractPhysicalObject.type == null && grasps[1].grabbed.abstractPhysicalObject.type == obj)
+            {
+                canCraft = true;
+            }
+            Debug.Log(canCraft);
+            return canCraft;
         }
 
         private static bool Player_GraspsCanBeCrafted(On.Player.orig_GraspsCanBeCrafted orig, Player self)
@@ -339,7 +502,34 @@ namespace JadScugs
                     {//Lantern + Lantern = Grenade
                         return true;
                     }
-                    else return false;
+                    else return orig(self);
+                }
+            }
+            else if (self.SlugCatClass.value == "BCPuppet" && self.input[0].y == 1)
+            {
+                if (self.CraftingResults() != null)
+                {
+                    return true;
+                }
+                else
+                {
+                    if (self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Rock && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Rock)
+                    {//Rock + Rock = Spear
+                        return true;
+                    }
+                    else if (self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.PuffBall && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.PuffBall)
+                    {//Spore Puff + Spore Puff = Batnip
+                        return true;
+                    }
+                    else if (self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.FlyLure && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.FlyLure)
+                    {//Batnip + Batnip = Spore Puff
+                        return true;
+                    }
+                    /*else if (self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Lantern && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Lantern)
+                    {//Lantern + Lantern = Grenade
+                        return true;
+                    }*/
+                    else return orig(self);
                 }
             }
             else return orig(self);
