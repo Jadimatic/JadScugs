@@ -33,9 +33,10 @@ namespace JadScugs
 
         private static void PlayerGraphics_ApplyPalette(On.PlayerGraphics.orig_ApplyPalette orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
         {
-            if (self.player.BCPuppet().BCPuppetGown != null)
+            orig(self, sLeaser, rCam, palette);
+            if(self.player.SlugCatClass.value == "BCPuppet")
             {
-                self.player.BCPuppet().BCPuppetGown.ApplyPalette(self.gownIndex, sLeaser, rCam, palette);
+                self.player.BCPuppet().BCPuppetGown?.ApplyPalette(self.gownIndex, sLeaser, rCam, palette);
             }
         }
 
