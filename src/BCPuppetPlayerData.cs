@@ -17,6 +17,8 @@ namespace JadScugs
         public AttachedSprite headAntennae;
         public AttachedSprite headPattern;
         public AttachedSprite facePattern;
+        public PuppetGown BCPuppetGown;
+        public bool wearingGown;
 
 
 

@@ -15,6 +15,8 @@ namespace JadScugs
         public int StashDelayCounter;
         public bool ProteinBoost;
         public bool mouthStuffed = false;
+        public bool grabbed;
+        public bool invulnerableToBites;
 
         public void Draw(RoomCamera.SpriteLeaser sLeaser, bool mouthStuffed, bool nerv)
         {

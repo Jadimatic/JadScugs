@@ -51,6 +51,28 @@ namespace JadScugs
             }
             return false;
         }
+
+        public int FindMouthItemSlot(Player self, AbstractPhysicalObject.AbstractObjectType objType)
+        {
+            if (!self.TryGetMouthScugModule(out var playerModule))
+            {
+                return -1;
+            }
+            var mouthItems = playerModule.mouthItems;
+            int itemIndex = -1;
+            for (int i = 0; i < mouthItems.Length; i++)
+            {
+                if (mouthItems[i] != null && itemIndex < 0)
+                {
+                    if (mouthItems[i].type == objType)
+                    {
+                        itemIndex = i;
+                    }
+                }
+            }
+            return itemIndex;
+        }
+
         public int MouthIndex(Player self)
         {
             int index = -1;

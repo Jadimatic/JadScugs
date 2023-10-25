@@ -20,8 +20,12 @@ namespace JadScugs
             return (flag && !self.submerged && !flag2 && (self.input[0].y < 0 || self.bodyMode == Player.BodyModeIndex.Crawl) && (self.canJump > 0 || self.input[0].y < 0) && self.Consious && !self.pyroJumpped && self.pyroParryCooldown <= 0f);
         }
 
-        public void ConcussiveBlast(Player self, bool smoke = true, bool light = true, int stunDuration = 80, float coolDown = 40f)
+        public void ConcussiveBlast(Player self, bool smoke = true, bool light = true, int stunDuration = 80, float coolDown = 40f, float radius = 200f, float intensity = 30f, bool stunSelf = false, bool doesDamage = false)
         {
+            if(stunSelf)
+            {
+                self.Stun((stunDuration / 4) * 3);
+            }
             self.pyroParryCooldown = coolDown;
             Vector2 pos2 = self.firstChunk.pos;
             for (int k = 0; k < 8; k++)
@@ -40,7 +44,7 @@ namespace JadScugs
                 Vector2 a2 = Custom.RNV();
                 self.room.AddObject(new Spark(pos2 + a2 * UnityEngine.Random.value * 40f, a2 * Mathf.Lerp(4f, 30f, UnityEngine.Random.value), Color.white, null, 4, 18));
             }
-            self.room.AddObject(new ShockWave(pos2, 200f, 0.2f, 6, false));
+            self.room.AddObject(new ShockWave(pos2, radius, 0.2f, 6, false));
             self.room.PlaySound(SoundID.Fire_Spear_Explode, pos2, 0.3f + UnityEngine.Random.value * 0.3f, 0.5f + UnityEngine.Random.value * 2f);
             self.room.InGameNoise(new InGameNoise(pos2, 8000f, self, 1f));
             List<Weapon> list = new List<Weapon>();
@@ -70,7 +74,7 @@ namespace JadScugs
                     if (self.room.physicalObjects[m][n] is Creature && self.room.physicalObjects[m][n] != self && flag4)
                     {
                         Creature creature = self.room.physicalObjects[m][n] as Creature;
-                        if (Custom.Dist(pos2, creature.firstChunk.pos) < 200f && (Custom.Dist(pos2, creature.firstChunk.pos) < 60f || self.room.VisualContact(self.abstractCreature.pos, creature.abstractCreature.pos)))
+                        if (Custom.Dist(pos2, creature.firstChunk.pos) < radius && (Custom.Dist(pos2, creature.firstChunk.pos) < 60f || self.room.VisualContact(self.abstractCreature.pos, creature.abstractCreature.pos)))
                         {
                             self.room.socialEventRecognizer.WeaponAttack(null, self, creature, true);
                             creature.SetKillTag(self.abstractCreature);
@@ -82,7 +86,11 @@ namespace JadScugs
                             {
                                 creature.Stun(stunDuration);
                             }
-                            creature.firstChunk.vel = Custom.DegToVec(Custom.AimFromOneVectorToAnother(pos2, creature.firstChunk.pos)) * 30f;
+                            if(doesDamage)
+                            {
+                                creature.Violence(self.bodyChunks[1], null, creature.bodyChunks[0], null, Creature.DamageType.Explosion, intensity / 25, stunDuration);
+                            }
+                            creature.firstChunk.vel = Custom.DegToVec(Custom.AimFromOneVectorToAnother(pos2, creature.firstChunk.pos)) * intensity;
                             if (creature is TentaclePlant)
                             {
                                 for (int num5 = 0; num5 < creature.grasps.Length; num5++)

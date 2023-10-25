@@ -9,9 +9,9 @@
 		  { "name": "Cloth Primary", "story": "FFFFFF" },
 		  { "name": "Pattern", "story": "5D629A" }
 		],
-		"start_room": "SU_VR1",
+		"start_room": "OE_FINAL02",
 		"food_max": 6,
-		"food_min": 0,
+		"food_min": 1,
 		"select_menu_scene": "Slugcat_BCPuppet",
 		"select_menu_scene_ascended": "Ghost_BCPuppet",
 	}

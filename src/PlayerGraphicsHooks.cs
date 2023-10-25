@@ -22,12 +22,21 @@ namespace JadScugs
             On.Player.UpdateBodyMode += Player_UpdateBodyMode;
             AttachedSprite.Apply();
             On.PlayerGraphics.DrawSprites += PlayerGraphics_DrawSprites;
+            On.PlayerGraphics.ApplyPalette += PlayerGraphics_ApplyPalette;
             On.PlayerGraphics.InitiateSprites += PlayerGraphics_InitiateSprites;
             On.PlayerGraphics.ctor += PlayerGraphics_ctor;
             On.PlayerGraphics.Update += PlayerGraphics_Update;
             On.Player.Update += Player_Update;
             On.SlugcatHand.Update += SlugcatHand_Update;
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
+        }
+
+        private static void PlayerGraphics_ApplyPalette(On.PlayerGraphics.orig_ApplyPalette orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
+        {
+            if (self.player.BCPuppet().BCPuppetGown != null)
+            {
+                self.player.BCPuppet().BCPuppetGown.ApplyPalette(self.gownIndex, sLeaser, rCam, palette);
+            }
         }
 
         public static void ShowArms(SlugcatHand hand, Player player, Vector2 armDist, Vector2 beamTipArmDist, float velEffect)
@@ -92,6 +101,12 @@ namespace JadScugs
             }
             if (self.player.SlugCatClass.value == "BCPuppet")
             {
+                if(self.player.BCPuppet().BCPuppetGown != null)
+                {
+                    Array.Resize(ref sLeaser.sprites, sLeaser.sprites.Length + 1);
+                    self.gownIndex = sLeaser.sprites.Length - 1;
+                    self.player.BCPuppet().BCPuppetGown.InitiateSprite(self.gownIndex, sLeaser, rCam);
+                }
                 if (sLeaser.sprites[2] is TriangleMesh tail && Futile.atlasManager.DoesContainElementWithName("BCPuppet_Tail"))
                 {
                     tail.element = Futile.atlasManager.GetElementWithName("BCPuppet_Tail");
@@ -121,6 +136,7 @@ namespace JadScugs
             orig(self, ow);
             if(self.player.SlugCatClass.value == "BCPuppet")
             {
+                self.player.BCPuppet().BCPuppetGown = new PuppetGown(self, "BCPuppetGownTex");
                 self.player.BCPuppet().headAntennae = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Head, "BCPuppetAntennae_");
                 self.player.BCPuppet().headPattern = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Head, "BCPuppetPattern_");
                 self.player.BCPuppet().facePattern = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Face, "BCPuppetPattern_", false);
@@ -163,11 +179,6 @@ namespace JadScugs
         private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
             orig(self, eu);
-
-
-
-
-
             try
             {
                 MouthScug_Update(self, eu);
@@ -205,6 +216,10 @@ namespace JadScugs
         {
             if(self.SlugCatClass.value == "BCPuppet")
             {
+                if (self.input[0].jmp && !self.input[1].jmp)
+                {
+                    
+                }
                 Debug.Log(self.eatCounter);
                 if (self.eatCounter < 15)
                 {
@@ -212,7 +227,7 @@ namespace JadScugs
                 }
                 if (self.BCPuppet().grabbed)
                 {
-                    self.SlugCatSkill().ConcussiveBlast(self, false, false, 100);
+                    self.SlugCatSkill().ConcussiveBlast(self, false, false, 100, 40, 350, 60);
                     self.SubtractFood(1);
                     self.BCPuppet().grabbed = false;
                 }
@@ -279,7 +294,6 @@ namespace JadScugs
             {
                 self.MouthScug().StashDelayCounter--;
             }
-
             self.pyroParryCooldown -= 1f;
             if (playerModule.MouthContains(self, AbstractPhysicalObject.AbstractObjectType.FirecrackerPlant))
             {
@@ -288,8 +302,41 @@ namespace JadScugs
                     self.SlugCatSkill().ConcussiveBlast(self);
                 }
             }
+            if (playerModule.MouthContains(self, AbstractPhysicalObject.AbstractObjectType.SSOracleSwarmer) || playerModule.MouthContains(self, AbstractPhysicalObject.AbstractObjectType.Lantern))
+            {
+                self.glowing = true;
+            }
+            else
+            {
+                self.glowing = (self.room.game.session as StoryGameSession).saveState.theGlow;
+            }
+            if (self.BCPuppet().grabbed)
+            {
+                AbstractPhysicalObject.AbstractObjectType scavBomb = AbstractPhysicalObject.AbstractObjectType.ScavengerBomb;
+                if (playerModule.MouthContains(self, scavBomb))
+                {
+                    int itemIndex = playerModule.FindMouthItemSlot(self, scavBomb);
+                    if(itemIndex > -1)
+                    {
+
+                        mouthItems[itemIndex] = null;
+                    }
+                    self.SlugCatSkill().ConcussiveBlast(self, true, true, 80, 1, 200, 30, false, true);
+                }
+                AbstractPhysicalObject.AbstractObjectType beehive = AbstractPhysicalObject.AbstractObjectType.SporePlant;
+                if (playerModule.MouthContains(self, beehive))
+                {
+                    int itemIndex = playerModule.FindMouthItemSlot(self, beehive);
+                    if (itemIndex > -1)
+                    {
+                        mouthItems[itemIndex] = null;
+                    }
+                    //self.SlugCatSkill().ConcussiveBlast(self, true, true, 80, 1, 200, 30, false, true);
+                }
+                self.BCPuppet().grabbed = false;
+            }
             //Debug.Log("Corpse stored: " + playerModule.mouthCreature);
-            //Debug.Log(mouthItems[0] + ", " + mouthItems[1]);
+            Debug.Log(mouthItems[0] + ", " + mouthItems[1]);
 
             if (self.animation == Player.AnimationIndex.Roll)
             {
@@ -351,6 +398,16 @@ namespace JadScugs
             orig(self);
             if (self.player.SlugCatClass.value == "BCPuppet")
             {
+                if (self.owner.room != null && self.owner.room.game.IsStorySession && !self.player.playerState.isPup)
+                {
+                    self.gown.visible = self.player.BCPuppet().wearingGown;
+                }
+                else
+                {
+                    self.gown.visible = false;
+                }
+                self.player.BCPuppet().BCPuppetGown.Update();
+                self.swallowing = 0;
                 SeaLegsPartTwo(self);
             }
         }
@@ -427,6 +484,10 @@ namespace JadScugs
             }
             if(self.player.SlugCatClass.value == "BCPuppet")
             {
+                if (self.player.BCPuppet().BCPuppetGown != null)
+                {
+                    self.player.BCPuppet().BCPuppetGown.DrawSprite(self.gownIndex, sLeaser, rCam, timeStacker, camPos);
+                }
                 self.player.JadScug().DangerLevel = DangerLevelMath(self, 1562f, 9762f);
                 bool nerv = (self.player.JadScug().DangerLevel > 0);
                 self.player.BCPuppet().Draw(sLeaser, nerv);
