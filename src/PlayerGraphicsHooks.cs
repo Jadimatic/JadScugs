@@ -130,6 +130,7 @@ namespace JadScugs
                     }
                 }
             }
+            self.AddToContainer(sLeaser, rCam, null);
         }
 
         private static void PlayerGraphics_ctor(On.PlayerGraphics.orig_ctor orig, PlayerGraphics self, PhysicalObject ow)
@@ -217,6 +218,8 @@ namespace JadScugs
         {
             if(self.SlugCatClass.value == "BCPuppet")
             {
+                self.BCPuppet().wearingGown = true;
+                //Debug.Log("Is the gown visible?"+self.BCPuppet().BCPuppetGown.visible+" dat.");
                 if (self.input[0].jmp && !self.input[1].jmp)
                 {
                     
@@ -399,13 +402,13 @@ namespace JadScugs
             orig(self);
             if (self.player.SlugCatClass.value == "BCPuppet")
             {
-                if (self.owner.room != null && self.owner.room.game.IsStorySession && !self.player.playerState.isPup)
+                if (self.owner.room != null && !self.player.playerState.isPup)
                 {
-                    self.gown.visible = self.player.BCPuppet().wearingGown;
+                    self.player.BCPuppet().BCPuppetGown.visible = self.player.BCPuppet().wearingGown;
                 }
                 else
                 {
-                    self.gown.visible = false;
+                    self.player.BCPuppet().BCPuppetGown.visible = false;
                 }
                 self.player.BCPuppet().BCPuppetGown.Update();
                 self.swallowing = 0;
