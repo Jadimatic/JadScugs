@@ -26,9 +26,20 @@ namespace JadScugs
             On.PlayerGraphics.InitiateSprites += PlayerGraphics_InitiateSprites;
             On.PlayerGraphics.ctor += PlayerGraphics_ctor;
             On.PlayerGraphics.Update += PlayerGraphics_Update;
+            On.PlayerGraphics.AddToContainer += PlayerGraphics_AddToContainer;
             On.Player.Update += Player_Update;
             On.SlugcatHand.Update += SlugcatHand_Update;
             On.RainWorld.OnModsInit += Extras.WrapInit(LoadResources);
+        }
+
+        private static void PlayerGraphics_AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
+        {
+            orig(self, sLeaser, rCam, newContatiner);
+            if (sLeaser.sprites.Length > self.player.BCPuppet().BCPuppetGown.gownIndex && self.player.BCPuppet().BCPuppetGown != null)
+            {
+                rCam.ReturnFContainer("Midground").AddChild(sLeaser.sprites[self.player.BCPuppet().BCPuppetGown.gownIndex]);
+                sLeaser.sprites[self.player.BCPuppet().BCPuppetGown.gownIndex].MoveBehindOtherNode(sLeaser.sprites[5]);
+            }
         }
 
         private static void PlayerGraphics_ApplyPalette(On.PlayerGraphics.orig_ApplyPalette orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
@@ -36,7 +47,7 @@ namespace JadScugs
             orig(self, sLeaser, rCam, palette);
             if(self.player.SlugCatClass.value == "BCPuppet")
             {
-                self.player.BCPuppet().BCPuppetGown?.ApplyPalette(self.gownIndex, sLeaser, rCam, palette);
+                self.player.BCPuppet().BCPuppetGown?.ApplyPalette(self.player.BCPuppet().BCPuppetGown.gownIndex, sLeaser, rCam, palette);
             }
         }
 
@@ -105,8 +116,8 @@ namespace JadScugs
                 if(self.player.BCPuppet().BCPuppetGown != null)
                 {
                     Array.Resize(ref sLeaser.sprites, sLeaser.sprites.Length + 1);
-                    self.gownIndex = sLeaser.sprites.Length - 1;
-                    self.player.BCPuppet().BCPuppetGown.InitiateSprite(self.gownIndex, sLeaser, rCam);
+                    self.player.BCPuppet().BCPuppetGown.gownIndex = sLeaser.sprites.Length - 1;
+                    self.player.BCPuppet().BCPuppetGown.InitiateSprite(self.player.BCPuppet().BCPuppetGown.gownIndex, sLeaser, rCam);
                 }
                 if (sLeaser.sprites[2] is TriangleMesh tail && Futile.atlasManager.DoesContainElementWithName("BCPuppet_Tail"))
                 {
@@ -490,7 +501,7 @@ namespace JadScugs
             {
                 if (self.player.BCPuppet().BCPuppetGown != null)
                 {
-                    self.player.BCPuppet().BCPuppetGown.DrawSprite(self.gownIndex, sLeaser, rCam, timeStacker, camPos);
+                    self.player.BCPuppet().BCPuppetGown.DrawSprite(self.player.BCPuppet().BCPuppetGown.gownIndex, sLeaser, rCam, timeStacker, camPos);
                 }
                 self.player.JadScug().DangerLevel = DangerLevelMath(self, 1562f, 9762f);
                 bool nerv = (self.player.JadScug().DangerLevel > 0);

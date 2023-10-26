@@ -19,6 +19,7 @@ namespace JadScugs
         public AttachedSprite facePattern;
         public PuppetGown BCPuppetGown;
         public bool wearingGown;
+        public int gownIndex;
 
 
 

@@ -10,7 +10,6 @@ namespace JadScugs
 {
     public class PuppetGown
     {
-        // Token: 0x060039E6 RID: 14822 RVA: 0x00423028 File Offset: 0x00421228
         public PuppetGown(PlayerGraphics owner, string texture)
         {
             this.divs = 11;
@@ -21,7 +20,6 @@ namespace JadScugs
             this.needsReset = true;
         }
 
-        // Token: 0x060039E7 RID: 14823 RVA: 0x00423068 File Offset: 0x00421268
         public void Update()
         {
             if (!this.visible || this.owner.player.room == null)
@@ -94,7 +92,6 @@ namespace JadScugs
             }
         }
 
-        // Token: 0x060039E8 RID: 14824 RVA: 0x004236A4 File Offset: 0x004218A4
         private Vector2 IdealPosForPoint(int x, int y, Vector2 bodyPos, Vector2 dir, Vector2 perp)
         {
             float num = Mathf.InverseLerp(0f, (float)(this.divs - 1), (float)x);
@@ -102,13 +99,11 @@ namespace JadScugs
             return bodyPos + Mathf.Lerp(-1f, 1f, num) * perp * Mathf.Lerp(9f, 11f, t) + dir * Mathf.Lerp(8f, -9f, t) * (1f + Mathf.Sin(3.1415927f * num) * 0.35f * Mathf.Lerp(-1f, 1f, t));
         }
 
-        // Token: 0x060039E9 RID: 14825 RVA: 0x0042375C File Offset: 0x0042195C
         public Color Color(float f)
         {
             return Custom.HSL2RGB(Mathf.Lerp(0.38f, 0.32f, Mathf.Pow(f, 2f)), Mathf.Lerp(0f, 0.1f, Mathf.Pow(f, 1.1f)), Mathf.Lerp(0.7f, 0.3f, Mathf.Pow(f, 6f)));
         }
 
-        // Token: 0x060039EA RID: 14826 RVA: 0x004237BC File Offset: 0x004219BC
         public void InitiateSprite(int sprite, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
         {
             sLeaser.sprites[sprite] = TriangleMesh.MakeGridMesh(texture, this.divs - 1);
@@ -123,7 +118,6 @@ namespace JadScugs
             }
         }
 
-        // Token: 0x060039EB RID: 14827 RVA: 0x0042386C File Offset: 0x00421A6C
         public void ApplyPalette(int sprite, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, RoomPalette palette)
         {
             for (int i = 0; i < this.divs; i++)
@@ -135,7 +129,6 @@ namespace JadScugs
             }
         }
 
-        // Token: 0x060039EC RID: 14828 RVA: 0x004238D0 File Offset: 0x00421AD0
         public void DrawSprite(int sprite, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
             sLeaser.sprites[sprite].isVisible = (this.visible && this.owner.player.room != null);
@@ -152,21 +145,18 @@ namespace JadScugs
             }
         }
 
-        // Token: 0x040038FE RID: 14590
         private PlayerGraphics owner;
 
         private string texture;
 
-        // Token: 0x040038FF RID: 14591
+        public int gownIndex;
+
         private int divs;
 
-        // Token: 0x04003900 RID: 14592
         public Vector2[,,] clothPoints;
 
-        // Token: 0x04003901 RID: 14593
         public bool visible;
 
-        // Token: 0x04003902 RID: 14594
         public bool needsReset;
     }
 }
