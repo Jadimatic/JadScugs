@@ -70,6 +70,14 @@ public class AttachedSprite
         }
     }
 
+    public void ApplyToSprites(RoomCamera.SpriteLeaser sLeaser, Action<FSprite> action)
+    {
+        for (var i = 0; i < (SpriteType == AttachedSpriteType.Arms ? 4 : 1); i++)
+        {
+            action.Invoke(sLeaser.sprites[SpriteIndex + i]);
+        }
+    }
+
     public void RemoveFromContainer()
     {
         ScheduledForRemoval = true;
@@ -131,6 +139,8 @@ public class AttachedSprite
                 sprite.scaleY = originalSprite.scaleY;
                 sprite.isVisible = originalSprite.isVisible;
                 sprite.alpha = originalSprite.alpha;
+                sprite.anchorX = originalSprite.anchorX;
+                sprite.anchorY = originalSprite.anchorY;
             }
         }
     }

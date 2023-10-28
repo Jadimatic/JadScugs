@@ -2,14 +2,17 @@
 	"id": "BCPuppet",
 	"name": "The Puppet",
 	"description": "Puppet of the iterator Bountiful Curiosity",
+	"color": "CC5571",
 	"features": {
 		"custom_colors": [
 		  { "name": "Body", "story": "CC5571" },
 		  { "name": "Eyes", "story": "FFFFFF", "arena": [ "FFFFFF", "FFFFFF", "FFFFFF", "FFFFFF" ] },
-		  { "name": "Cloth Primary", "story": "FFFFFF" },
+		  { "name": "Cloth Primary", "story": "73BF59" },
+		  { "name": "Cloth Secondary", "story": "E2C90B" },
 		  { "name": "Pattern", "story": "5D629A" }
 		],
-		"start_room": "OE_FINAL02",
+		"start_room": "CL_D08",
+		"auto_grab_batflies": false,
 		"food_max": 6,
 		"food_min": 1,
 		"select_menu_scene": "Slugcat_BCPuppet",

@@ -56,10 +56,10 @@ namespace JadScugs
 
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-face"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppetNerv-face"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetPattern-face");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-head"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetAntennae-head"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetPattern-head");
-                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-arm");
-                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-body");
+                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-arm"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetGown-arm");
+                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-body"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppetDressed-body"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetGown-body");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetGownTex");
-                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-hips");
+                Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-hips"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppetDressed-hips"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetGown-hips");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-legs");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-tail");
                 

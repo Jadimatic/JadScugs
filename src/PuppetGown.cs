@@ -10,7 +10,7 @@ namespace JadScugs
 {
     public class PuppetGown
     {
-        public PuppetGown(PlayerGraphics owner, string texture)
+        public PuppetGown(PlayerGraphics owner, string texture, Color primaryColor, Color secondaryColor)
         {
             this.divs = 11;
             this.owner = owner;
@@ -18,6 +18,9 @@ namespace JadScugs
             this.clothPoints = new Vector2[this.divs, this.divs, 3];
             this.visible = false;
             this.needsReset = true;
+            this.GownOffset = 1f;
+            this.gownPrimary = primaryColor;
+            this.gownSecondary = secondaryColor;
         }
 
         public void Update()
@@ -41,7 +44,7 @@ namespace JadScugs
                 }
                 this.needsReset = false;
             }
-            Vector2 vector = Vector2.Lerp(this.owner.head.pos, this.owner.player.bodyChunks[1].pos, 0.75f);
+            Vector2 vector = Vector2.Lerp(this.owner.head.pos, this.owner.player.bodyChunks[1].pos, 0.6f + ((GownOffset * 0.025f)));
             if (this.owner.player.bodyMode == Player.BodyModeIndex.Crawl)
             {
                 vector += new Vector2(0f, 4f);
@@ -50,7 +53,22 @@ namespace JadScugs
             if (this.owner.player.bodyMode == Player.BodyModeIndex.Stand)
             {
                 vector += new Vector2(0f, Mathf.Sin((float)this.owner.player.animationFrame / 6f * 2f * 3.1415927f) * 2f);
-                a = new Vector2(0f, -11f + Mathf.Sin((float)this.owner.player.animationFrame / 6f * 2f * 3.1415927f) * -2.5f);
+                a = new Vector2(0f, (GownOffset * -2.5f) + Mathf.Sin((float)this.owner.player.animationFrame / 6f * 2f * 3.1415927f) * -2.5f);
+            }
+            if (this.owner.player.animation == Player.AnimationIndex.BeamTip)
+            {
+                vector += new Vector2(0f, Mathf.Sin((float)this.owner.player.animationFrame / 6f * 2f * 3.1415927f) * 2f);
+                a = new Vector2(0f, (GownOffset * -16f) + 6f);
+            }
+            if (this.owner.player.animation == Player.AnimationIndex.StandOnBeam)
+            {
+                vector += new Vector2(0f, Mathf.Sin((float)this.owner.player.animationFrame / 6f * 2f * 3.1415927f) * 2f);
+                a = new Vector2(0f, (GownOffset * -20f) + 6f);
+            }
+            if (this.owner.player.animation == Player.AnimationIndex.ClimbOnBeam)
+            {
+                vector += new Vector2(0f, 0f);
+                a = new Vector2(0f, (GownOffset * -21.5f) + 6f);
             }
             Vector2 bodyPos = vector;
             Vector2 vector2 = Custom.DirVec(this.owner.player.bodyChunks[1].pos, this.owner.player.bodyChunks[0].pos + Custom.DirVec(default(Vector2), this.owner.player.bodyChunks[0].vel) * 5f) * 1.6f;
@@ -101,7 +119,8 @@ namespace JadScugs
 
         public Color Color(float f)
         {
-            return Custom.HSL2RGB(Mathf.Lerp(0.38f, 0.32f, Mathf.Pow(f, 2f)), Mathf.Lerp(0f, 0.1f, Mathf.Pow(f, 1.1f)), Mathf.Lerp(0.7f, 0.3f, Mathf.Pow(f, 6f)));
+            return UnityEngine.Color.Lerp(gownPrimary, gownSecondary, f);
+            //return Custom.HSL2RGB(Mathf.Lerp(0.38f, 0.32f, Mathf.Pow(f, 2f)), Mathf.Lerp(0f, 0.1f, Mathf.Pow(f, 1.1f)), Mathf.Lerp(0.7f, 0.3f, Mathf.Pow(f, 6f)));
         }
 
         public void InitiateSprite(int sprite, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam)
@@ -148,6 +167,12 @@ namespace JadScugs
         private PlayerGraphics owner;
 
         private string texture;
+
+        private float GownOffset;
+
+        private Color gownPrimary;
+
+        private Color gownSecondary;
 
         public int gownIndex;
 

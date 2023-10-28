@@ -35,10 +35,14 @@ namespace JadScugs
         private static void PlayerGraphics_AddToContainer(On.PlayerGraphics.orig_AddToContainer orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, FContainer newContatiner)
         {
             orig(self, sLeaser, rCam, newContatiner);
-            if (sLeaser.sprites.Length > self.player.BCPuppet().BCPuppetGown.gownIndex && self.player.BCPuppet().BCPuppetGown != null)
+            if(self.player.SlugCatClass.value == "BCPuppet")
             {
-                rCam.ReturnFContainer("Midground").AddChild(sLeaser.sprites[self.player.BCPuppet().BCPuppetGown.gownIndex]);
-                sLeaser.sprites[self.player.BCPuppet().BCPuppetGown.gownIndex].MoveBehindOtherNode(sLeaser.sprites[5]);
+                if (sLeaser.sprites.Length > self.player.BCPuppet().BCPuppetGown.gownIndex && self.player.BCPuppet().BCPuppetGown != null)
+                {
+                    rCam.ReturnFContainer("Midground").AddChild(sLeaser.sprites[self.player.BCPuppet().BCPuppetGown.gownIndex]);
+                    sLeaser.sprites[self.player.BCPuppet().BCPuppetGown.gownIndex].MoveBehindOtherNode(sLeaser.sprites[5]);
+                    sLeaser.sprites[self.player.BCPuppet().gownBody.SpriteIndex].MoveBehindOtherNode(sLeaser.sprites[self.player.BCPuppet().BCPuppetGown.gownIndex]);
+                }
             }
         }
 
@@ -79,7 +83,7 @@ namespace JadScugs
             orig(self);
             if (self.owner.owner is Player player && player.SlugCatClass.value == "BCPuppet")
             {
-                ShowArms(self, player, new Vector2(8, -20), new Vector2(20, -12), 4);
+                ShowArms(self, player, new Vector2(15, -20), new Vector2(20, -12), 4);
             }
         }
 
@@ -149,10 +153,13 @@ namespace JadScugs
             orig(self, ow);
             if(self.player.SlugCatClass.value == "BCPuppet")
             {
-                self.player.BCPuppet().BCPuppetGown = new PuppetGown(self, "BCPuppetGownTex");
+                self.player.BCPuppet().BCPuppetGown = new PuppetGown(self, "BCPuppetGownTex", (Color)self.GetColor(BCPuppetEnums.Color.ClothPrimary), (Color)self.GetColor(BCPuppetEnums.Color.ClothSecondary));
                 self.player.BCPuppet().headAntennae = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Head, "BCPuppetAntennae_");
                 self.player.BCPuppet().headPattern = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Head, "BCPuppetPattern_");
                 self.player.BCPuppet().facePattern = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Face, "BCPuppetPattern_", false);
+                self.player.BCPuppet().gownArms = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Arms, "BCPuppetGown_", false);
+                self.player.BCPuppet().gownBody = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Body, "BCPuppetGown_", false);
+                self.player.BCPuppet().gownHips = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Hips, "BCPuppetGown_", false);
             }
 
             if (self.player.SlugCatClass.value == "MouthScug")
@@ -230,12 +237,12 @@ namespace JadScugs
             if(self.SlugCatClass.value == "BCPuppet")
             {
                 self.BCPuppet().wearingGown = true;
-                //Debug.Log("Is the gown visible?"+self.BCPuppet().BCPuppetGown.visible+" dat.");
                 if (self.input[0].jmp && !self.input[1].jmp)
                 {
                     
                 }
-                Debug.Log(self.eatCounter);
+                Debug.Log("BCPuppet body mode is " + self.bodyMode);
+                Debug.Log("BcPuppet animation is " + self.animation);
                 if (self.eatCounter < 15)
                 {
                     self.eatCounter = 15;
@@ -323,7 +330,7 @@ namespace JadScugs
             }
             else
             {
-                self.glowing = (self.room.game.session as StoryGameSession).saveState.theGlow;
+                //self.glowing = (self.room.game.session as StoryGameSession).saveState.theGlow;
             }
             if (self.BCPuppet().grabbed)
             {
@@ -351,6 +358,7 @@ namespace JadScugs
                 self.BCPuppet().grabbed = false;
             }
             //Debug.Log("Corpse stored: " + playerModule.mouthCreature);
+            Debug.Log(self.FoodInStomach);
             Debug.Log(mouthItems[0] + ", " + mouthItems[1]);
 
             if (self.animation == Player.AnimationIndex.Roll)
@@ -503,12 +511,27 @@ namespace JadScugs
                 {
                     self.player.BCPuppet().BCPuppetGown.DrawSprite(self.player.BCPuppet().BCPuppetGown.gownIndex, sLeaser, rCam, timeStacker, camPos);
                 }
+                if(self.player.BCPuppet().wearingGown)
+                {
+                    sLeaser.sprites[self.player.BCPuppet().gownBody.SpriteIndex].isVisible = true;
+                    self.player.BCPuppet().gownArms.ApplyToSprites(sLeaser, sprite => sprite.isVisible = true);
+                }
+                else
+                {
+                    sLeaser.sprites[self.player.BCPuppet().gownBody.SpriteIndex].isVisible = false;
+                    self.player.BCPuppet().gownArms.ApplyToSprites(sLeaser, sprite => sprite.isVisible = false);
+                }
                 self.player.JadScug().DangerLevel = DangerLevelMath(self, 1562f, 9762f);
                 bool nerv = (self.player.JadScug().DangerLevel > 0);
-                self.player.BCPuppet().Draw(sLeaser, nerv);
-                sLeaser.sprites[self.player.BCPuppet().headAntennae.SpriteIndex].color = (Color)self.GetColor(BCPuppetEnums.Color.Cloth);
+                self.player.BCPuppet().Draw(sLeaser, nerv, self.player.BCPuppet().BCPuppetGown.visible);
+                sLeaser.sprites[self.player.BCPuppet().headAntennae.SpriteIndex].color = Custom.hexToColor("FFFFFF");
                 sLeaser.sprites[self.player.BCPuppet().headPattern.SpriteIndex].color = (Color)self.GetColor(BCPuppetEnums.Color.Pattern);
                 sLeaser.sprites[self.player.BCPuppet().facePattern.SpriteIndex].color = (Color)self.GetColor(BCPuppetEnums.Color.Pattern);
+                sLeaser.sprites[self.player.BCPuppet().gownBody.SpriteIndex].color = (Color)self.GetColor(BCPuppetEnums.Color.ClothPrimary);
+                sLeaser.sprites[self.player.BCPuppet().gownHips.SpriteIndex].color = (Color)self.GetColor(BCPuppetEnums.Color.ClothSecondary);
+
+
+                self.player.BCPuppet().gownArms.ApplyToSprites(sLeaser, sprite => { sprite.color = (Color)self.GetColor(BCPuppetEnums.Color.ClothPrimary); sprite.MoveInFrontOfOtherNode(sLeaser.sprites[5 + sLeaser.sprites.IndexOf(sprite) - self.player.BCPuppet().gownArms.SpriteIndex]); });
                 SeaLegsPartOne(self, sLeaser, camPos, timeStacker);
             }
         }

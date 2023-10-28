@@ -40,7 +40,13 @@ namespace JadScugs
             On.Player.Grabbed += Player_Grabbed;
             On.Creature.HypothermiaUpdate += Creature_HypothermiaUpdate;
             On.OverWorld.WorldLoaded += OverWorld_WorldLoaded;
+            On.Creature.Violence += Creature_Violence;
             On.Player.Jump += Player_Jump;
+        }
+
+        private static void Creature_Violence(On.Creature.orig_Violence orig, Creature self, BodyChunk source, Vector2? directionAndMomentum, BodyChunk hitChunk, PhysicalObject.Appendage.Pos hitAppendage, Creature.DamageType type, float damage, float stunBonus)
+        {
+            Debug.Log("Attack damage was " + damage);
         }
 
         private static void Creature_HypothermiaUpdate(On.Creature.orig_HypothermiaUpdate orig, Creature self)

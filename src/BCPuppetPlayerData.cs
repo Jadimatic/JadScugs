@@ -17,6 +17,9 @@ namespace JadScugs
         public AttachedSprite headAntennae;
         public AttachedSprite headPattern;
         public AttachedSprite facePattern;
+        public AttachedSprite gownArms;
+        public AttachedSprite gownBody;
+        public AttachedSprite gownHips;
         public PuppetGown BCPuppetGown;
         public bool wearingGown;
         public int gownIndex;
@@ -62,10 +65,12 @@ namespace JadScugs
 
 
         public Color BodyColor;
-        public Color ClothColor;
+        public Color ClothColorPrimary;
+        public Color ClothColorSecondary;
         public void SetupColors(PlayerGraphics pg)
         {
-            ClothColor = pg.GetColor(BCPuppetEnums.Color.Cloth) ?? Custom.hexToColor("fd7a02");
+            ClothColorPrimary = pg.GetColor(BCPuppetEnums.Color.ClothPrimary) ?? Custom.hexToColor("fd7a02");
+            ClothColorSecondary = pg.GetColor(BCPuppetEnums.Color.ClothSecondary) ?? Custom.hexToColor("fd7a02");
         }
 
         public void LoadHeadAtlas()
@@ -73,7 +78,6 @@ namespace JadScugs
             var headTexture = new Texture2D(Plugin.HeadTexture.width, Plugin.HeadTexture.height, TextureFormat.ARGB32, false);
             Graphics.CopyTexture(Plugin.HeadTexture, headTexture);
             JadScugUtils.MapTextureColor(headTexture, 0, BodyColor);
-            JadScugUtils.MapTextureColor(headTexture, 0, ClothColor);
 
             if (playerRef.TryGetTarget(out var player))
             {
@@ -85,7 +89,6 @@ namespace JadScugs
             var armTexture = new Texture2D(Plugin.ArmTexture.width, Plugin.ArmTexture.height, TextureFormat.ARGB32, false);
             Graphics.CopyTexture(Plugin.TailTexture, armTexture);
             JadScugUtils.MapTextureColor(armTexture, 0, BodyColor);
-            JadScugUtils.MapTextureColor(armTexture, 0, ClothColor);
 
             if (playerRef.TryGetTarget(out var player))
             {
@@ -97,7 +100,6 @@ namespace JadScugs
             var bodyTexture = new Texture2D(Plugin.BodyTexture.width, Plugin.BodyTexture.height, TextureFormat.ARGB32, false);
             Graphics.CopyTexture(Plugin.BodyTexture, bodyTexture);
             JadScugUtils.MapTextureColor(bodyTexture, 0, BodyColor);
-            JadScugUtils.MapTextureColor(bodyTexture, 0, ClothColor);
 
             if (playerRef.TryGetTarget(out var player))
             {
@@ -109,7 +111,6 @@ namespace JadScugs
             var hipTexture = new Texture2D(Plugin.HipTexture.width, Plugin.HipTexture.height, TextureFormat.ARGB32, false);
             Graphics.CopyTexture(Plugin.HipTexture, hipTexture);
             JadScugUtils.MapTextureColor(hipTexture, 0, BodyColor);
-            JadScugUtils.MapTextureColor(hipTexture, 0, ClothColor);
 
 
             if (playerRef.TryGetTarget(out var player))
@@ -122,7 +123,6 @@ namespace JadScugs
             var legTexture = new Texture2D(Plugin.LegTexture.width, Plugin.LegTexture.height, TextureFormat.ARGB32, false);
             Graphics.CopyTexture(Plugin.LegTexture, legTexture);
             JadScugUtils.MapTextureColor(legTexture, 0, BodyColor);
-            JadScugUtils.MapTextureColor(legTexture, 0, ClothColor);
 
             if (playerRef.TryGetTarget(out var player))
             {
@@ -134,7 +134,6 @@ namespace JadScugs
             var tailTexture = new Texture2D(Plugin.TailTexture.width, Plugin.TailTexture.height, TextureFormat.ARGB32, false);
             Graphics.CopyTexture(Plugin.TailTexture, tailTexture);
             JadScugUtils.MapTextureColor(tailTexture, 0, BodyColor);
-            JadScugUtils.MapTextureColor(tailTexture, 0, ClothColor);
 
             if (playerRef.TryGetTarget(out var player))
             {
@@ -144,16 +143,14 @@ namespace JadScugs
 
 
 
-        public void Draw(RoomCamera.SpriteLeaser sLeaser, bool nerv)
+        public void Draw(RoomCamera.SpriteLeaser sLeaser, bool nerv, bool dressed)
         {
             foreach (var sprite in sLeaser.sprites)
             {
                 if (nerv && Futile.atlasManager._allElementsByName.TryGetValue("BCPuppetNerv_" + sprite.element.name, out var element)) { sprite.element = element; }
+                else if (dressed && Futile.atlasManager._allElementsByName.TryGetValue("BCPuppetDressed_" + sprite.element.name, out element)) { sprite.element = element; }
                 else if (Futile.atlasManager._allElementsByName.TryGetValue("BCPuppet_" + sprite.element.name, out element)) { sprite.element = element; }
             }
-            /*FAtlasElement tailNerv = Futile.atlasManager.GetElementWithName("BCPuppetNerv_Tail");
-            FAtlasElement tailNormal = Futile.atlasManager.GetElementWithName("BCPuppet_Tail");
-            sLeaser.sprites[2].element = nerv ? tailNerv : tailNormal;*/
         }
 
     }

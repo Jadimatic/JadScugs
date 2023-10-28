@@ -7,13 +7,15 @@ public static class BCPuppetEnums
     public static SlugcatStats.Name BCPuppet = new("puppet");
     public static class Color
     {
-        public static PlayerColor Cloth;
+        public static PlayerColor ClothPrimary;
+        public static PlayerColor ClothSecondary;
         public static PlayerColor Pattern;
     }
 
     public static void RegisterValues()
     {
         Color.Pattern = new PlayerColor("Pattern");
-        Color.Cloth = new PlayerColor("Cloth Primary");
+        Color.ClothPrimary = new PlayerColor("Cloth Primary");
+        Color.ClothSecondary = new PlayerColor("Cloth Secondary");
     }
 }
