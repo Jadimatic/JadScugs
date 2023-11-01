@@ -1,0 +1,27 @@
+{
+	"id": "Medic",
+	"name": "The Medic",
+	"description": "WIP Slugcat.",
+	"features": {
+		"custom_colors": [
+		  { "name": "Body", "story": "91463D" },
+		  { "name": "Eyes", "story": "FFFFFF", "arena": [ "FFFFFF", "FF8080", "80FF80", "8080FF" ] }
+		],
+		"alignments": {
+		  "Scavengers": { "like": 1, "locked": true }
+		},
+		"start_room": "HI_B02",
+		"auto_grab_batflies": false,
+		"food_max": 6,
+		"food_min": 3,
+		"diet": {
+		  "base": "Saint",
+		  "plants": 1,
+		  "overrides": {
+			"DangleFruit": 1
+		  }
+		},
+		"select_menu_scene": "Slugcat_Medic",
+		"select_menu_scene_ascended": "Ghost_Medic",
+	}
+}

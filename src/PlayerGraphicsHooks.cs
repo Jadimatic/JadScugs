@@ -115,6 +115,30 @@ namespace JadScugs
                     }
                 }
             }
+            if (self.player.SlugCatClass.value == "Medic")
+            {
+                if (sLeaser.sprites[2] is TriangleMesh tail && Futile.atlasManager.DoesContainElementWithName("Medic_Tail"))
+                {
+                    tail.element = Futile.atlasManager.GetElementWithName("Medic_Tail");
+                    for (var i = tail.vertices.Length - 1; i >= 0; i--)
+                    {
+                        var perc = i / 2 / (float)(tail.vertices.Length / 2);
+                        Vector2 uv;
+                        if (i % 2 == 0)
+                            uv = new Vector2(perc, 0f);
+                        else if (i < tail.vertices.Length - 1)
+                            uv = new Vector2(perc, 1f);
+                        else
+                            uv = new Vector2(1f, 0f);
+
+                        // Map UV values to the element
+                        uv.x = Mathf.Lerp(tail.element.uvBottomLeft.x, tail.element.uvTopRight.x, uv.x);
+                        uv.y = Mathf.Lerp(tail.element.uvBottomLeft.y, tail.element.uvTopRight.y, uv.y);
+
+                        tail.UVvertices[i] = uv;
+                    }
+                }
+            }
             if (self.player.SlugCatClass.value == "BCPuppet")
             {
                 if(self.player.BCPuppet().BCPuppetGown != null)
@@ -164,10 +188,30 @@ namespace JadScugs
 
             if (self.player.SlugCatClass.value == "MouthScug")
             {
+
+                self.tail = new TailSegment[4];
                 self.tail[0] = new TailSegment(self, 7.5f, 4f, null, 0.5f, 1f, 1f, true);
                 self.tail[1] = new TailSegment(self, 8f, 7f, self.tail[0], 0.5f, 1f, 0.5f, true);
                 self.tail[2] = new TailSegment(self, 7f, 7f, self.tail[1], 0.5f, 1f, 0.5f, true);
                 self.tail[3] = new TailSegment(self, 4.5f, 7f, self.tail[2], 0.5f, 1f, 0.5f, true);
+                var bp = self.bodyParts.ToList();
+                bp.RemoveAll(x => x is TailSegment);
+                bp.AddRange(self.tail);
+
+                self.bodyParts = bp.ToArray();
+            }
+            if (self.player.SlugCatClass.value == "Medic")
+            {
+                self.tail = new TailSegment[4];
+                self.tail[0] = new TailSegment(self, 7.5f, 4f, null, 0.5f, 1f, 1f, true);
+                self.tail[1] = new TailSegment(self, 8f, 7f, self.tail[0], 0.5f, 1f, 0.5f, true);
+                self.tail[2] = new TailSegment(self, 7f, 7f, self.tail[1], 0.5f, 1f, 0.5f, true);
+                self.tail[3] = new TailSegment(self, 4.5f, 7f, self.tail[2], 0.5f, 1f, 0.5f, true);
+                var bp = self.bodyParts.ToList();
+                bp.RemoveAll(x => x is TailSegment);
+                bp.AddRange(self.tail);
+
+                self.bodyParts = bp.ToArray();
             }
         }
 
@@ -199,6 +243,7 @@ namespace JadScugs
         private static void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         {
             orig(self, eu);
+            //Debug.Log(self.sleepCounter);
             try
             {
                 MouthScug_Update(self, eu);
@@ -210,6 +255,14 @@ namespace JadScugs
             try
             {
                 BCPuppet_Update(self, eu);
+            }
+            catch (Exception e)
+            {
+                Debug.Log($"Exception at (hook name):  {e}");
+            }
+            try
+            {
+                Medic_Update(self, eu);
             }
             catch (Exception e)
             {
@@ -232,6 +285,66 @@ namespace JadScugs
             }
         }
 
+        private static void Medic_Update(Player self, bool eu)
+        {
+            if (self.SlugCatClass.value == "Medic")
+            {
+                Debug.Log(self.sleepCounter);
+                
+                var rawInput = RWInput.PlayerInput(self.playerState.playerNumber, Custom.rainWorld);
+
+                if (rawInput.y == 1)
+                {
+                }
+
+                if (self.input[0].y == -1 && self.input[1].y == 0 && self.Medic().NeedleTypeIndex(self) == -2){self.sleepCounter = -1;}
+                if(self.sleepCounter < -20){self.sleepCounter = 99;}
+                if(self.sleepCounter > 0)
+                {
+                    self.Medic().needleCounter += 0.05f;
+                    if(self.Medic().needleCounter >= 1f)
+                    {
+                        if(self.Medic().needles < 20)
+                        {
+                            self.Medic().needles++;
+                        }
+                        self.Medic().needleCounter = 0;
+                    }
+                }
+                else
+                {
+                    self.Medic().needleCounter = 0;
+                }
+
+                if (self.input[0].pckp && !self.input[1].pckp && self.Medic().needles > 0)
+                {
+                    if(self.Medic().NeedleTypeIndex(self) == 1)
+                    {
+                        self.Medic().needles--;
+                        AbstractSpear abstractSpear = new AbstractSpear(self.room.world, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID(), false);
+                        self.SlugCatSkill().AddHeldObject(abstractSpear, self);
+                    }
+                }
+
+
+                /*if(self.sleepCounter > 0 && self.Medic().needleCounter >= 1)
+                {
+                    self.Medic().needles++;
+                }
+                else
+                {
+                    //self.Medic().needles += self.Medic().needles % 10 > 5 ? 10 - self.Medic().needles % 10 : (self.Medic().needles % 10) * -1;
+                    //self.Medic().needleCount += 10 - self.Medic().needleCount % 10;
+                }*/
+                Debug.Log("Player has " + self.Medic().needles + "needles.");
+                Debug.Log("Player is " + self.Medic().needleCounter + " time closer to gaining a new needle.");
+                if (self.Medic().grabbed)
+                {
+                    self.Medic().grabbed = false;
+                }
+            }
+        }
+
         private static void BCPuppet_Update(Player self, bool eu)
         {
             if(self.SlugCatClass.value == "BCPuppet")
@@ -241,8 +354,6 @@ namespace JadScugs
                 {
                     
                 }
-                Debug.Log("BCPuppet body mode is " + self.bodyMode);
-                Debug.Log("BcPuppet animation is " + self.animation);
                 if (self.eatCounter < 15)
                 {
                     self.eatCounter = 15;

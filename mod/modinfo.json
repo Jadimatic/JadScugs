@@ -1,10 +1,10 @@
 ﻿{
 	"id": "jadimatic.jadscugs",
-	"name": "Jad Scugs",
+	"name": "Rain World: New Heights",
 	"version": "0.1.0",
 	"authors": "Jadimatic",
-	"description": "A collection of custom slugcats.",
-	"requirements": [ "slime-cubed.slugbase" ],
+	"description": "Adds The Maw, The Medic and The Puppet with their respective campaigns, set in regions that surround a great mountain.",
+	"requirements": [ "slime-cubed.slugbase", "rwremix", "moreslugcats" ],
 	"requirements_names": [ "SlugBase" ],
 	"tags": [ "Custom Slugcat" ]
 }

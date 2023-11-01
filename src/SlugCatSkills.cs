@@ -13,6 +13,35 @@ namespace JadScugs
 
     public class SlugCatSkills
     {
+        public void SpawnOverseer(Player self, int ownerIterator = 1)
+        {
+            AbstractCreature abstractOverseer = new AbstractCreature(self.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.Overseer), null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID());
+            (abstractOverseer.abstractAI as OverseerAbstractAI).ownerIterator = ownerIterator;
+            abstractOverseer.pos = self.room.GetWorldCoordinate(self.firstChunk.pos);
+            self.room.abstractRoom.AddEntity(abstractOverseer);
+            abstractOverseer.RealizeInRoom();
+            self.room.PlaySound(SoundID.Zapper_Zap, self.mainBodyChunk, false, 0.38f, 2.5f);
+        }
+        /// <summary>Puts an object in the free hand of a specified slugcat.</summary>
+        public void AddHeldObject(AbstractPhysicalObject newObject, Player self)
+        {
+            self.room.abstractRoom.AddEntity(newObject);//Adds object into the room.
+            newObject.pos = self.abstractCreature.pos;//Ensures it's placed at the slugcat's position
+            newObject.RealizeInRoom();//Realizes the object in the room.
+            if (self.FreeHand() != -1)
+            {
+                self.SlugcatGrab(newObject.realizedObject, self.FreeHand());//Places the object in a slugcat's hand.
+            }
+            else
+            {
+                if (newObject is AbstractSpear abstractSpear)
+                {//Speeeeeeeeen!
+                    (abstractSpear.realizedObject as Spear).SetRandomSpin();
+                }
+                Debug.Log(self.SlugCatClass.value + " failed to grab object because no hands were free."); return;
+            }
+        }
+
         public bool ArtificerConsussionConditions(Player self)
         {
             bool flag = self.wantToJump > 0 && self.input[0].pckp;

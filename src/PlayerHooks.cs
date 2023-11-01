@@ -36,17 +36,48 @@ namespace JadScugs
             On.Player.EatMeatUpdate += Player_EatMeatUpdate;
             On.Player.HeavyCarry += Player_HeavyCarry;
             On.Player.ThrownSpear += Player_ThrownSpear;
-            On.Player.DeathByBiteMultiplier += Player_DeathByBiteMultiplier;
             On.Player.Grabbed += Player_Grabbed;
             On.Creature.HypothermiaUpdate += Creature_HypothermiaUpdate;
             On.OverWorld.WorldLoaded += OverWorld_WorldLoaded;
             On.Creature.Violence += Creature_Violence;
             On.Player.Jump += Player_Jump;
+            On.Player.Grabability += Player_Grabability;
+        }
+
+        private static Player.ObjectGrabability Player_Grabability(On.Player.orig_Grabability orig, Player self, PhysicalObject obj)
+        {
+            if(self.SlugCatClass.value == "Medic")
+            {
+                if(obj.abstractPhysicalObject is AbstractSpear)
+                {
+                    return Player.ObjectGrabability.OneHand;
+                }
+            }
+            return orig(self, obj);
         }
 
         private static void Creature_Violence(On.Creature.orig_Violence orig, Creature self, BodyChunk source, Vector2? directionAndMomentum, BodyChunk hitChunk, PhysicalObject.Appendage.Pos hitAppendage, Creature.DamageType type, float damage, float stunBonus)
         {
-            Debug.Log("Attack damage was " + damage);
+
+            if (self is Player player)
+            {
+                if (source?.owner is Lizard or DropBug)
+                {
+                    if (player.SlugCatClass.value == "BCPuppet" && player.FoodInStomach > 0)
+                    {
+                        damage = 0;
+                    }
+                    if (player.SlugCatClass.value == "MouthScug" && player.FoodInStomach > 0)
+                    {
+                        damage = 0;
+                    }
+                    if (player.SlugCatClass.value == "Medic")
+                    {
+                        damage = 0;
+                    }
+                }
+            }
+            orig(self, source, directionAndMomentum, hitChunk, hitAppendage, type, damage, stunBonus);
         }
 
         private static void Creature_HypothermiaUpdate(On.Creature.orig_HypothermiaUpdate orig, Creature self)
@@ -66,16 +97,6 @@ namespace JadScugs
                 return Custom.hexToColor("7588EA");
             }
             return result;
-        }
-
-        private static void SpawnOverseer(Player self, int ownerIterator = 1)
-        {
-            AbstractCreature abstractOverseer = new AbstractCreature(self.room.world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.Overseer), null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID());
-            (abstractOverseer.abstractAI as OverseerAbstractAI).ownerIterator = ownerIterator;
-            abstractOverseer.pos = self.room.GetWorldCoordinate(self.firstChunk.pos);
-            self.room.abstractRoom.AddEntity(abstractOverseer);
-            abstractOverseer.RealizeInRoom();
-            self.room.PlaySound(SoundID.Zapper_Zap, self.mainBodyChunk, false, 0.38f, 2.5f);
         }
 
         private static void Player_GrabUpdate(ILContext il)
@@ -157,20 +178,6 @@ namespace JadScugs
             }
         }
 
-        private static float Player_DeathByBiteMultiplier(On.Player.orig_DeathByBiteMultiplier orig, Player self)
-        {
-            orig(self);
-            if(self.SlugCatClass.value == "BCPuppet" && self.FoodInStomach > 0)
-            {
-                return 0;
-            }
-            if (self.SlugCatClass.value == "MouthScug" && self.FoodInStomach > 0)
-            {
-                return 0;
-            }
-            return orig(self);
-        }
-
         private static void OverWorld_WorldLoaded(On.OverWorld.orig_WorldLoaded orig, OverWorld self)
         {
             orig(self);
@@ -208,6 +215,10 @@ namespace JadScugs
                 {
                     spear.spearDamageBonus = 1f;
                 }
+            }
+            if (self.SlugCatClass.value == "Medic")
+            {
+                spear.spearDamageBonus = 0f;
             }
         }
 
@@ -405,7 +416,7 @@ namespace JadScugs
                         self.ReleaseGrasp(grasp);
                         abstractPhysicalObject.realizedObject.RemoveFromRoom();
                         self.room.abstractRoom.RemoveEntity(abstractPhysicalObject);
-                        SpawnOverseer(self, 8675309);
+                        self.SlugCatSkill().SpawnOverseer(self, 8675309);
                     }
                 }
                 return;
@@ -433,26 +444,6 @@ namespace JadScugs
             }
         }
 
-        /// <summary>Puts an object in the free hand of a specified slugcat.</summary>
-        private static void AddHeldObject(AbstractPhysicalObject newObject, Player self)
-        {
-            self.room.abstractRoom.AddEntity(newObject);//Adds object into the room.
-            newObject.pos = self.abstractCreature.pos;//Ensures it's placed at the slugcat's position
-            newObject.RealizeInRoom();//Realizes the object in the room.
-            if (self.FreeHand() != -1)
-            {
-                self.SlugcatGrab(newObject.realizedObject, self.FreeHand());//Places the object in a slugcat's hand.
-            }
-            else
-            {
-                if(newObject is AbstractSpear abstractSpear)
-                {
-                    (abstractSpear.realizedObject as Spear).SetRandomSpin();
-                }
-                Debug.Log(self.SlugCatClass.value + " failed to grab object because no hands were free."); return;
-            }
-        }
-
         private static void Player_SpitUpCraftedObject(On.Player.orig_SpitUpCraftedObject orig, Player self)
         {
             if (self.SlugCatClass.value == "MouthScug")
@@ -465,7 +456,7 @@ namespace JadScugs
                         AbstractConsumable abstractFlower = new AbstractConsumable(self.room.world, AbstractPhysicalObject.AbstractObjectType.KarmaFlower, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID(), -1, -1, null);
                         AbstractPhysicalObject abstractRock = new AbstractPhysicalObject(self.room.world, AbstractPhysicalObject.AbstractObjectType.Rock, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID());
                         RemoveHeldObjects(self);
-                        AddHeldObject(abstractFlower, self);
+                        self.SlugCatSkill().AddHeldObject(abstractFlower, self);
                         return;
                     }
                 }
@@ -473,28 +464,28 @@ namespace JadScugs
                 {
                     AbstractSpear abstractSpear = new AbstractSpear(self.room.world, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID(), false);
                     RemoveHeldObjects(self);
-                    AddHeldObject(abstractSpear, self);
+                    self.SlugCatSkill().AddHeldObject(abstractSpear, self);
                     return;
                 }
                 if (self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.PuffBall && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.PuffBall)
                 {
                     AbstractConsumable abstractBatnip = new AbstractConsumable(self.room.world, AbstractPhysicalObject.AbstractObjectType.FlyLure, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID(), -1, -1, null);
                     RemoveHeldObjects(self);
-                    AddHeldObject(abstractBatnip, self);
+                    self.SlugCatSkill().AddHeldObject(abstractBatnip, self);
                     return;
                 }
                 if (self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.FlyLure && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.FlyLure)
                 {
                     AbstractConsumable abstractSporePuff = new AbstractConsumable(self.room.world, AbstractPhysicalObject.AbstractObjectType.PuffBall, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID(), -1, -1, null);
                     RemoveHeldObjects(self);
-                    AddHeldObject(abstractSporePuff, self);
+                    self.SlugCatSkill().AddHeldObject(abstractSporePuff, self);
                     return;
                 }
                 if (self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Lantern && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.Lantern)
                 {
                     AbstractPhysicalObject abstractGrenade = new AbstractPhysicalObject(self.room.world, AbstractPhysicalObject.AbstractObjectType.ScavengerBomb, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID());
                     RemoveHeldObjects(self);
-                    AddHeldObject(abstractGrenade, self);
+                    self.SlugCatSkill().AddHeldObject(abstractGrenade, self);
                     return;
                 }
             }
@@ -509,7 +500,7 @@ namespace JadScugs
                     {
                         AbstractSpear abstractSpear = new AbstractSpear(self.room.world, null, self.room.GetWorldCoordinate(self.firstChunk.pos), self.room.game.GetNewID(), false);
                         RemoveHeldObjects(self);
-                        AddHeldObject(abstractSpear, self);
+                        self.SlugCatSkill().AddHeldObject(abstractSpear, self);
                         return;
                     }
                     if(self.grasps[0].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.KarmaFlower && self.grasps[1].grabbed.abstractPhysicalObject.type == AbstractPhysicalObject.AbstractObjectType.SlimeMold ||
@@ -517,7 +508,7 @@ namespace JadScugs
                     {
                         RemoveHeldObjects(self);
                         AbstractPhysicalObject abstractOverseerEye = new OverseerCarcass.AbstractOverseerCarcass(self.room.world, null, self.abstractPhysicalObject.pos, self.room.game.GetNewID(), new Color(1,1,1), 8675309);
-                        AddHeldObject(abstractOverseerEye, self);
+                        self.SlugCatSkill().AddHeldObject(abstractOverseerEye, self);
                         return;
                     }
                 }
