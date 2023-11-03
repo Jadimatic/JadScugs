@@ -117,9 +117,9 @@ namespace JadScugs
             }
             if (self.player.SlugCatClass.value == "Medic")
             {
-                if (sLeaser.sprites[2] is TriangleMesh tail && Futile.atlasManager.DoesContainElementWithName("Medic_Tail"))
+                if (sLeaser.sprites[2] is TriangleMesh tail && Futile.atlasManager.DoesContainElementWithName("MedicNeedlesEmpty_Tail"))
                 {
-                    tail.element = Futile.atlasManager.GetElementWithName("Medic_Tail");
+                    tail.element = Futile.atlasManager.GetElementWithName("MedicNeedlesEmpty_Tail");
                     for (var i = tail.vertices.Length - 1; i >= 0; i--)
                     {
                         var perc = i / 2 / (float)(tail.vertices.Length / 2);
@@ -138,6 +138,7 @@ namespace JadScugs
                         tail.UVvertices[i] = uv;
                     }
                 }
+                self.player.Medic().TailUpdate(self, false);
             }
             if (self.player.SlugCatClass.value == "BCPuppet")
             {
@@ -185,23 +186,13 @@ namespace JadScugs
                 self.player.BCPuppet().gownBody = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Body, "BCPuppetGown_", false);
                 self.player.BCPuppet().gownHips = AttachedSprite.Create(self, AttachedSprite.AttachedSpriteType.Hips, "BCPuppetGown_", false);
             }
-
+            if (self.player.SlugCatClass.value == "Medic")
+            {
+                self.player.Medic().TailUpdate(self, true);
+            }
             if (self.player.SlugCatClass.value == "MouthScug")
             {
 
-                self.tail = new TailSegment[4];
-                self.tail[0] = new TailSegment(self, 7.5f, 4f, null, 0.5f, 1f, 1f, true);
-                self.tail[1] = new TailSegment(self, 8f, 7f, self.tail[0], 0.5f, 1f, 0.5f, true);
-                self.tail[2] = new TailSegment(self, 7f, 7f, self.tail[1], 0.5f, 1f, 0.5f, true);
-                self.tail[3] = new TailSegment(self, 4.5f, 7f, self.tail[2], 0.5f, 1f, 0.5f, true);
-                var bp = self.bodyParts.ToList();
-                bp.RemoveAll(x => x is TailSegment);
-                bp.AddRange(self.tail);
-
-                self.bodyParts = bp.ToArray();
-            }
-            if (self.player.SlugCatClass.value == "Medic")
-            {
                 self.tail = new TailSegment[4];
                 self.tail[0] = new TailSegment(self, 7.5f, 4f, null, 0.5f, 1f, 1f, true);
                 self.tail[1] = new TailSegment(self, 8f, 7f, self.tail[0], 0.5f, 1f, 0.5f, true);
@@ -304,7 +295,7 @@ namespace JadScugs
                     self.Medic().needleCounter += 0.05f;
                     if(self.Medic().needleCounter >= 1f)
                     {
-                        if(self.Medic().needles < 20)
+                        if(self.Medic().needles < self.Medic().maxNeedles)
                         {
                             self.Medic().needles++;
                         }
@@ -521,6 +512,10 @@ namespace JadScugs
 
         private static void PlayerGraphics_Update(On.PlayerGraphics.orig_Update orig, PlayerGraphics self)
         {
+            if(self.player.SlugCatClass.value == "Medic")
+            {
+                self.player.Medic().TailUpdate(self, true);
+            }
             if (self.player.SlugCatClass.value == "MouthScug")
             {
                 if(self.player.MouthScug().SpitCounter > 0)
@@ -616,6 +611,11 @@ namespace JadScugs
                 //self.playerState.isPup = true;
                 self.player.MouthScug().Draw(sLeaser, MouthStuffed(self.player), nerv);
             }
+            if(self.player.SlugCatClass.value == "Medic")
+            {
+                bool nerv = (self.player.JadScug().DangerLevel > 0);
+                self.player.Medic().Draw(sLeaser, self, nerv);
+            }
             if(self.player.SlugCatClass.value == "BCPuppet")
             {
                 if (self.player.BCPuppet().BCPuppetGown != null)
@@ -674,6 +674,10 @@ namespace JadScugs
         private static void Player_ctor(On.Player.orig_ctor orig, Player self, AbstractCreature abstractCreature, World world)
         {
             orig(self, abstractCreature, world);
+            if(self.SlugCatClass.value == "Medic")
+            {
+                self.Medic().needles = self.Medic().maxNeedles;
+            }
             if (self.SlugCatClass.value == "MouthScug")
             {
                 if (!self.playerState.isPup)

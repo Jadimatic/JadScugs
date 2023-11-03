@@ -59,7 +59,7 @@ namespace JadScugs
                 Futile.atlasManager.LoadAtlas("atlases/MedicAtlases/Medic-body");
                 Futile.atlasManager.LoadAtlas("atlases/MedicAtlases/Medic-hips");
                 Futile.atlasManager.LoadAtlas("atlases/MedicAtlases/Medic-legs");
-                Futile.atlasManager.LoadAtlas("atlases/MedicAtlases/Medic-tail"); Futile.atlasManager.LoadAtlas("atlases/MedicAtlases/MedicNerv-tail");
+                Futile.atlasManager.LoadAtlas("atlases/MedicAtlases/MedicNeedlesEmpty-tail"); Futile.atlasManager.LoadAtlas("atlases/MedicAtlases/MedicNeedlesHalf-tail"); Futile.atlasManager.LoadAtlas("atlases/MedicAtlases/MedicNeedlesFull-tail");
 
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-face"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppetNerv-face"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetPattern-face");
                 Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/BCPuppet-head"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetAntennae-head"); Futile.atlasManager.LoadAtlas("atlases/BCPuppetAtlases/Layers/BCPuppetPattern-head");
